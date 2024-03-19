@@ -1,44 +1,43 @@
 import { defineStore } from "pinia";
-import axios from 'axios';
+import axios from "axios";
 
-export const usePropertyCategoriesStore = defineStore("propertyCategoriesStore", () => {
+export const usePropertyCategoriesStore = defineStore(
+  "propertyCategoriesStore",
+  () => {
+    const config = useRuntimeConfig();
 
-  const config = useRuntimeConfig()
+    const headers = {
+      Authorization: "Bearer " + config.public.strapiBearer,
+    };
 
-  const headers = {
-    'Authorization': 'Bearer ' + config.public.strapiBearer
-  };
+    const state = reactive({
+      propertyCategories: [],
+      propertyCategory: {},
+    });
 
-  const state = reactive({
-    propertyCategories: [],
-    propertyCategory: {}
-  });
+    const actions = {
+      async fetchPropertyCategories() {
+        const params = {};
 
-  const actions = {
+        try {
+          const response = await axios.get(
+            config.public.strapiApi + "/categories",
+            {
+              headers: headers,
+              params: params,
+            },
+          );
 
-    async fetchPropertyCategories() {
-      const params = {}
+          this.propertyCategories = response.data.data;
+        } catch (error) {
+          console.error("Failed to fetch posts:", error);
+        }
+      },
+    };
 
-      try {
-        const response = await axios.get(config.public.strapiApi + '/categories', {
-          headers: {
-            Authorization: 'Bearer ' + config.public.strapiBearer
-          },
-          params: params,
-        });
-
-        this.propertyCategories = response.data.data;
-      } catch (error) {
-        console.error('Failed to fetch posts:', error);
-      }
-
-    },
-    async fetchPropertyCategory(id) {
-    }
-  };
-
-  return {
-    ...toRefs(state),
-    ...actions,
-  };
-})
+    return {
+      ...toRefs(state),
+      ...actions,
+    };
+  },
+);

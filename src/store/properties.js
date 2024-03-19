@@ -1,12 +1,11 @@
 import { defineStore } from "pinia";
-import axios from 'axios';
+import axios from "axios";
 
 export const usePropertiesStore = defineStore("propertiesStore", () => {
-
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig();
 
   const headers = {
-    'Authorization': 'Bearer ' + config.public.strapiBearer
+    Authorization: "Bearer " + config.public.strapiBearer,
   };
 
   const state = reactive({
@@ -14,15 +13,14 @@ export const usePropertiesStore = defineStore("propertiesStore", () => {
     property: {},
     pagination: {
       page: 1,
-      pageSize: 10
-    }
+      pageSize: 10,
+    },
   });
 
   const actions = {
-
     async fetchProperties(pagination = {}, filters = {}) {
       if (pagination) {
-        this.pagination = {... this.pagination, ...pagination};
+        this.pagination = { ...this.pagination, ...pagination };
       }
 
       const params = {
@@ -31,29 +29,32 @@ export const usePropertiesStore = defineStore("propertiesStore", () => {
           pageSize: this.pagination.pageSize,
         },
         filters: filters,
-      }
+      };
 
       try {
-        const response = await axios.get(config.public.strapiApi + '/properties', {
-          headers: {
-            Authorization: 'Bearer ' + config.public.strapiBearer
+        const response = await axios.get(
+          config.public.strapiApi + "/properties",
+          {
+            headers: headers,
+            params: params,
           },
-          params: params,
-        });
+        );
 
         this.properties = response.data.data;
-        this.pagination = response.data.meta.pagination
+        this.pagination = response.data.meta.pagination;
       } catch (error) {
-        console.error('Failed to fetch posts:', error);
+        console.error("Failed to fetch posts:", error);
       }
     },
     async fetchProperty(id) {
-      await axios.get(config.public.strapiApi + '/properties/' + id, {
-        headers
-      }).then(response => {
-        this.property = response.data.data;
-      });
-    }
+      await axios
+        .get(config.public.strapiApi + "/properties/" + id, {
+          headers,
+        })
+        .then((response) => {
+          this.property = response.data.data;
+        });
+    },
   };
 
   return {
