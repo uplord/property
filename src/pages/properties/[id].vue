@@ -4,7 +4,7 @@
 
     <h2>{{ property.attributes.Name }}</h2>
 
-    <p>{{ property.attributes }}</p>
+    <StrapiBlocksText v-if="property.attributes.Description" :nodes="property.attributes.Description" />
 
     <p><a href="/properties">Back to properties</a></p>
   </div>

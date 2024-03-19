@@ -20,17 +20,32 @@ export const usePropertiesStore = defineStore("propertiesStore", () => {
 
   const actions = {
 
-    async fetchProperties(pagination = {}) {
+    async fetchProperties(pagination = {}, filters = {}) {
       if (pagination) {
         this.pagination = {... this.pagination, ...pagination};
       }
 
-      await axios.get(config.public.strapiApi + '/properties?pagination[page]=' + this.pagination.page + '&pagination[pageSize]=' + this.pagination.pageSize, {
-        headers
-      }).then(response => {
+      const params = {
+        pagination: {
+          page: this.pagination.page,
+          pageSize: this.pagination.pageSize,
+        },
+        filters: filters,
+      }
+
+      try {
+        const response = await axios.get(config.public.strapiApi + '/properties', {
+          headers: {
+            Authorization: 'Bearer ' + config.public.strapiBearer
+          },
+          params: params,
+        });
+
         this.properties = response.data.data;
         this.pagination = response.data.meta.pagination
-      });
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
+      }
     },
     async fetchProperty(id) {
       await axios.get(config.public.strapiApi + '/properties/' + id, {

@@ -1,25 +1,26 @@
 <template>
   <div>
     <h1>Properties</h1>
-
-    <ul v-if="properties">
+    <h2>Categories</h2>
+    <ul v-if="propertyCategories.length">
+      <li><button @click="changeCategory('')">None</button></li>
+      <li v-for="category in propertyCategories" :key="category.id">
+        <button :class="{ active: currentCategory === category.attributes.Name }" @click="changeCategory(category.attributes.Name)">
+          {{ category.attributes.Name }}
+        </button>
+      </li>
+    </ul>
+    <h2>Property List</h2>
+    <ul v-if="properties && properties.length">
       <li v-for="property in properties" :key="property.id">
         <a :href="'/properties/' + property.id">{{ property.attributes.Name }}</a>
       </li>
     </ul>
-
-    <ul v-if="pagination">
-      <li v-if="pagination.page != 1">
-        <a :href="'/properties?page=' + (parseInt(pagination.page) - 1)">
-          Prev
-        </a>
-      </li>
-      <li v-if="pagination.page != pagination.pageCount">
-        <a :href="'/properties?page=' + (parseInt(pagination.page) + 1)">
-          Next
-        </a>
-      </li>
-    </ul>
+    <p v-else>No properties available.</p>
+    <div v-if="pagination && properties.length">
+      <button v-if="pagination.page > 1" @click="changePage(pagination.page - 1)">Prev</button>
+      <button v-if="pagination.page < pagination.pageCount" @click="changePage(pagination.page + 1)">Next</button>
+    </div>
   </div>
 </template>
 
@@ -27,16 +28,51 @@
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from 'vue-router';
 import { usePropertiesStore } from "~/store/properties";
+import { usePropertyCategoriesStore } from "~/store/property-categories";
 import { storeToRefs } from "pinia";
 
 const route = useRoute();
-const propertiesStore = usePropertiesStore();
-const { properties, pagination } = storeToRefs(propertiesStore);
+const router = useRouter();
 
-onMounted(() => {
-  propertiesStore.fetchProperties({
-    page: route.query.page || 1,
-    pageSize: 8
-  })
-})
+const propertiesStore = usePropertiesStore();
+const propertyCategoriesStore = usePropertyCategoriesStore();
+const { properties, pagination } = storeToRefs(propertiesStore);
+const { propertyCategories } = storeToRefs(propertyCategoriesStore);
+
+const currentCategory = ref(route.query.property_categories || '');
+
+onMounted(async () => {
+  await propertyCategoriesStore.fetchPropertyCategories();
+  fetchProperties();
+});
+
+function fetchProperties(page = route.query.page || 1) {
+  const filters = currentCategory.value ? { 'property_categories': { Name: { $eq: currentCategory.value } } } : {};
+  propertiesStore.fetchProperties({ page, pageSize: 6 }, filters);
+}
+
+function changeCategory(category) {
+  currentCategory.value = category;
+  const queryParameters = { property_categories: category || undefined };
+  if (category) queryParameters.page = undefined; // Reset page to 1 implicitly
+  router.push({ path: '/properties', query: queryParameters }).catch(err => {});
+  fetchProperties(1); // Fetch with page reset to 1
+}
+
+function changePage(page) {
+  router.push({
+    path: '/properties',
+    query: { ...route.query, property_categories: currentCategory.value || undefined, page }
+  }).catch(err => {});
+  fetchProperties(page);
+}
 </script>
+
+<style scoped>
+.active {
+  font-weight: bold;
+}
+button:focus {
+  outline: none;
+}
+</style>
