@@ -7,6 +7,6 @@ export default defineNuxtConfig({
       strapiApi: process.env.STRAPI_API,
       strapiBearer: process.env.STRAPI_BEARER
     }
-  }
+  },
   srcDir: "src/",
 })
