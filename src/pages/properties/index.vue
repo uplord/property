@@ -1,18 +1,24 @@
 <template>
-  <div>
+  <div v-if="loaded">
     <h1>Properties</h1>
     <h2>Categories</h2>
     <ul v-if="propertyCategories.length">
-      <li><button @click="changeCategory('')">None</button></li>
+      <li>
+        <button :disabled="currentCategory === ''" @click="changeCategory('')">
+          None
+        </button>
+      </li>
       <li v-for="category in propertyCategories" :key="category.id">
         <button
           :class="{ active: currentCategory === category.attributes.Name }"
+          :disabled="currentCategory === category.attributes.Name"
           @click="changeCategory(category.attributes.Name)"
         >
           {{ category.attributes.Name }}
         </button>
       </li>
     </ul>
+    <p v-else>No categories available.</p>
     <h2>Property List</h2>
     <ul v-if="properties && properties.length">
       <li v-for="property in properties" :key="property.id">
@@ -56,16 +62,20 @@ const { propertyCategories } = storeToRefs(propertyCategoriesStore);
 
 const currentCategory = ref(route.query.property_categories || "");
 
+const loaded = ref(false);
+
 onMounted(async () => {
   await propertyCategoriesStore.fetchPropertyCategories();
   fetchProperties();
 });
 
-function fetchProperties(page = route.query.page || 1) {
+async function fetchProperties(page = route.query.page || 1) {
   const filters = currentCategory.value
     ? { property_categories: { Name: { $eq: currentCategory.value } } }
     : {};
-  propertiesStore.fetchProperties({ page, pageSize: 6 }, filters);
+  await propertiesStore.fetchProperties({ page, pageSize: 6 }, filters);
+
+  loaded.value = true;
 }
 
 function changeCategory(category) {

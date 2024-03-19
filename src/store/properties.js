@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
 import axios from "axios";
+import { reactive, toRefs } from "vue";
 
 export const usePropertiesStore = defineStore("propertiesStore", () => {
   const config = useRuntimeConfig();
 
   const headers = {
-    Authorization: "Bearer " + config.public.strapiBearer,
+    Authorization: `Bearer ${config.public.strapiBearer}`,
   };
 
   const state = reactive({
@@ -19,8 +20,8 @@ export const usePropertiesStore = defineStore("propertiesStore", () => {
 
   const actions = {
     async fetchProperties(pagination = {}, filters = {}) {
-      if (pagination) {
-        this.pagination = { ...this.pagination, ...pagination };
+      if (Object.keys(pagination).length) {
+        state.pagination = { ...state.pagination, ...pagination };
       }
 
       const params = {
@@ -33,17 +34,17 @@ export const usePropertiesStore = defineStore("propertiesStore", () => {
 
       try {
         const response = await axios.get(
-          config.public.strapiApi + "/properties",
+          `${config.public.strapiApi}/properties`,
           {
-            headers: headers,
-            params: params,
+            headers,
+            params,
           },
         );
 
         this.properties = response.data.data;
         this.pagination = response.data.meta.pagination;
       } catch (error) {
-        console.error("Failed to fetch posts:", error);
+        console.error("Failed to fetch properties:", error);
       }
     },
     async fetchProperty(id) {

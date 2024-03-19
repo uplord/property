@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import axios from "axios";
+import { reactive, toRefs } from "vue";
 
 export const usePropertyCategoriesStore = defineStore(
   "propertyCategoriesStore",
@@ -7,7 +8,7 @@ export const usePropertyCategoriesStore = defineStore(
     const config = useRuntimeConfig();
 
     const headers = {
-      Authorization: "Bearer " + config.public.strapiBearer,
+      Authorization: `Bearer ${config.public.strapiBearer}`,
     };
 
     const state = reactive({
@@ -17,20 +18,14 @@ export const usePropertyCategoriesStore = defineStore(
 
     const actions = {
       async fetchPropertyCategories() {
-        const params = {};
-
         try {
           const response = await axios.get(
-            config.public.strapiApi + "/categories",
-            {
-              headers: headers,
-              params: params,
-            },
+            `${config.public.strapiApi}/categories`,
+            { headers },
           );
-
-          this.propertyCategories = response.data.data;
+          state.propertyCategories = response.data.data;
         } catch (error) {
-          console.error("Failed to fetch posts:", error);
+          console.error("Failed to fetch property categories:", error);
         }
       },
     };
