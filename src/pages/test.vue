@@ -53,17 +53,14 @@ export default {
 
         const acceleration = event.accelerationIncludingGravity;
         accel.value = acceleration;
-        console.log(acceleration)
-        console.log(acceleration.z)
-        /*
+
         if (lastZ.value !== null) {
             const deltaZ = Math.abs(lastZ.value - acceleration.z);
-            console.log(lastZ.value + ' - ' + deltaZ)
             if (deltaZ > stepThreshold.value) {
                 stepCount.value++;
             }
         }
-        lastZ = acceleration.z;*/
+        lastZ.value = acceleration.z;
     }
 
     function checkDeviceMotionPermission() {
