@@ -53,8 +53,10 @@ export default {
 
         const acceleration = event.accelerationIncludingGravity;
         accel.value = acceleration;
+        console.log(acceleration)
         if (lastZ.value !== null) {
             const deltaZ = Math.abs(lastZ.value - acceleration.z);
+            console.log(lastZ.value + ' - ' + deltaZ)
             if (deltaZ > stepThreshold.value) {
                 stepCount.value++;
             }
