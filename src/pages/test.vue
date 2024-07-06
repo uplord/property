@@ -12,6 +12,7 @@
       alpha: <span>{{ gyroAlpha }}</span> <br>
       beta: <span>{{ gyroBeta }}</span> <br>
       gamma: <span>{{ gyroGamma }}</span> <br>
+      <p>Steps: {{ stepCount }}</p>
       <p v-if="errorMessage">{{ errorMessage }}</p>
     </div>
         <div @click="checkDeviceMotionPermission()">Button</div>
@@ -30,6 +31,10 @@ export default {
     const gyroGamma = ref('0');
     const errorMessage = ref('');
 
+    const stepCount = ref('0');
+    const lastZ = ref(null);
+    const stepThreshold = ref(12);
+
     function handleMotion(event) {
       if (event.acceleration) {
         accelX.value = event.acceleration.x ? event.acceleration.x.toFixed(2) : 'N/A';
@@ -42,6 +47,15 @@ export default {
         gyroBeta.value = event.rotationRate.beta ? event.rotationRate.beta.toFixed(2) : 'N/A';
         gyroGamma.value = event.rotationRate.gamma ? event.rotationRate.gamma.toFixed(2) : 'N/A';
       }
+
+      const acceleration = event.accelerationIncludingGravity;
+        if (lastZ.value !== null) {
+        const deltaZ = Math.abs(lastZ.value - acceleration.z);
+        if (deltaZ > stepThreshold.value) {
+        stepCount.value++;
+        }
+        }
+        lastZ = acceleration.z;
     }
 
     function checkDeviceMotionPermission() {
@@ -84,6 +98,7 @@ export default {
         gyroAlpha,
         gyroBeta,
         gyroGamma,
+        stepCount,
         errorMessage,
         checkDeviceMotionPermission
     };
