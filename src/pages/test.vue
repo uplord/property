@@ -17,17 +17,13 @@ export default {
         errorMessage.value = '111';
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             errorMessage.value = 'ask';
-            document.body.addEventListener('click', function () {
-                errorMessage.value = 'click';
-                DeviceOrientationEvent.requestPermission()
-                    .then(function() {
-                        errorMessage.value = 'DeviceOrientationEvent, DeviceMotionEvent enabled';
-                    })
-                    .catch(function (error) {
-                        errorMessage.value = 'DeviceOrientationEvent, DeviceMotionEvent not enabled: ' + error;
-                    })
-            }, {once: true});
-            return;
+            DeviceOrientationEvent.requestPermission()
+                .then(function() {
+                    errorMessage.value = 'DeviceOrientationEvent, DeviceMotionEvent enabled';
+                })
+                .catch(function (error) {
+                    errorMessage.value = 'DeviceOrientationEvent, DeviceMotionEvent not enabled: ' + error;
+                })
         } else {
             errorMessage.value = 'Error';
         }
