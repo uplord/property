@@ -25,8 +25,8 @@ export default {
 
         const currentTime = Date.now();
 
-        const timeDifference = (currentTime - previousTime) / 1000;
-        const gammaDifference = gamma - previousGamma;
+        const timeDifference = (currentTime - previousTime.value) / 1000;
+        const gammaDifference = gamma - previousGamma.value;
         const displacement = Math.abs(gammaDifference) * 0.15 * timeDifference;
         totalMovement.value += displacement;
 
