@@ -35,8 +35,10 @@ export default {
     const stepCount = ref('0');
     const lastZ = ref(null);
 
-    const threshold = ref(15);
+    const accelerationThreshold = ref(15);
+    const rotationThreshold = ref(10);
     const lastAcceleration = ref({ x: null, y: null, z: null });
+    const lastRotationRate = ref({ alpha: null, beta: null, gamma: null });
     const lastTime = ref(0);
     /*
 
@@ -62,17 +64,26 @@ export default {
       }
 
         let currentTime = Date.now();
+
         if (currentTime - lastTime.value > 100) { // Sample every 100ms
             let acc = event.accelerationIncludingGravity;
+            let rot = event.rotationRate;
+
             let deltaX = Math.abs(lastAcceleration.value.x - acc.x);
             let deltaY = Math.abs(lastAcceleration.value.y - acc.y);
             let deltaZ = Math.abs(lastAcceleration.value.z - acc.z);
 
-            if ((deltaX + deltaY + deltaZ) > threshold.value) {
+            let deltaAlpha = Math.abs(lastRotationRate.alpha - rot.alpha);
+            let deltaBeta = Math.abs(lastRotationRate.beta - rot.beta);
+            let deltaGamma = Math.abs(lastRotationRate.gamma - rot.gamma);
+
+            if ((deltaX + deltaY + deltaZ) > accelerationThreshold.value || 
+                        (deltaAlpha + deltaBeta + deltaGamma) > rotationThreshold.value) {
                 stepCount.value++;
             }
 
             lastAcceleration.value = { x: acc.x, y: acc.y, z: acc.z };
+            lastRotationRate.value = { alpha: rot.alpha, beta: rot.beta, gamma: rot.gamma };
             lastTime.value = currentTime;
         }
 
