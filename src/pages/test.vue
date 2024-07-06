@@ -12,8 +12,7 @@
       alpha: <span>{{ gyroAlpha }}</span> <br>
       beta: <span>{{ gyroBeta }}</span> <br>
       gamma: <span>{{ gyroGamma }}</span> <br>
-      <p>Steps: {{ stepCount }}</p>
-      <p>lastZ: {{ lastZ }}</p>
+      <p>Steps: {{ steps }}</p>
       <p v-if="errorMessage">{{ errorMessage }}</p>
     </div>
         <div @click="checkDeviceMotionPermission()">Button</div>
@@ -32,8 +31,7 @@ export default {
     const gyroGamma = ref('0');
     const errorMessage = ref('');
 
-    const stepCount = ref('0');
-    const lastZ = ref(null);
+    const steps = ref('0');
 
     /*
     const accelerationThreshold = ref(15);
@@ -51,11 +49,13 @@ export default {
     const lastStepTime = ref(0);
     */
 
-    const stepThreshold = ref(1.0);
-    const minStepInterval = ref(300);
-    const lastStepTime = ref(0);
-    const lastFilteredAcc = ref(0);
-    const alpha = ref(0.8);
+    const stepThreshold = ref(1.2);
+    const filterFactor = ref(0.8);
+    const minTimeBetweenSteps = ref(300);
+
+    const lastAcceleration = ref({ x: 0, y: 0, z: 0 });
+    const filteredAcceleration = ref({ x: 0, y: 0, z: 0 });
+    const lastPeakTime = ref(0);
 
     function handleMotion(event) {
       if (event.acceleration) {
@@ -70,6 +70,31 @@ export default {
         gyroGamma.value = event.rotationRate.gamma ? event.rotationRate.gamma.toFixed(2) : 'N/A';
       }
 
+        const acceleration = event.accelerationIncludingGravity;
+        filteredAcceleration.value.x = filterFactor.value * filteredAcceleration.value.x + (1 - filterFactor.value) * acceleration.x;
+        filteredAcceleration.value.y = filterFactor.value * filteredAcceleration.y + (1 - filterFactor.value) * acceleration.y;
+        filteredAcceleration.value.z = filterFactor.value * filteredAcceleration.z + (1 - filterFactor.value) * acceleration.z;
+
+        const currentTime = new Date().getTime();
+
+        // Calculate the magnitude of the filtered acceleration vector
+        const magnitude = Math.sqrt(filteredAcceleration.value.x ** 2 + filteredAcceleration.value.y ** 2 + filteredAcceleration.value.z ** 2);
+        const delta = Math.abs(magnitude - lastAcceleration.value.magnitude);
+
+        if (delta > stepThreshold.value && (currentTime - lastPeakTime.value) > minTimeBetweenSteps.value) {
+            steps++;
+            lastPeakTime.value = currentTime;
+        }
+
+        lastAcceleration.value = {
+            x: filteredAcceleration.value.x,
+            y: filteredAcceleration.value.y,
+            z: filteredAcceleration.value.z,
+            magnitude: magnitude
+        };
+
+      /*
+
         const acc = event.accelerationIncludingGravity;
         const currentAcc = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
 
@@ -78,7 +103,7 @@ export default {
 
         const currentTime = Date.now();
         if (delta > stepThreshold.value && (currentTime - lastStepTime.value > minStepInterval.value)) {
-            stepCount.value++;
+            steps.value++;
             lastStepTime.value = currentTime;
         }
 
@@ -102,7 +127,7 @@ export default {
 
             if ((deltaX + deltaY + deltaZ) > accelerationThreshold.value || 
                         (deltaAlpha + deltaBeta + deltaGamma) > rotationThreshold.value) {
-                stepCount.value++;
+                steps.value++;
             }
 
             lastAcceleration.value = { x: acc.x, y: acc.y, z: acc.z };
@@ -124,7 +149,7 @@ export default {
 
         const now = Date.now();
         if (averageMagnitude > stepThreshold.value && (now - lastStepTime.value > stepInterval.value)) {
-            stepCount.value++;
+            steps.value++;
             lastStepTime.value = now;
         }
         /*
@@ -134,7 +159,7 @@ export default {
         if (lastZ.value !== null) {
             const deltaZ = Math.abs(lastZ.value - acceleration.z);
             if (deltaZ > stepThreshold.value) {
-                stepCount.value++;
+                steps.value++;
             }
         }
         lastZ.value = acceleration.z;
@@ -144,7 +169,7 @@ export default {
     function checkDeviceMotionPermission() {
         
         errorMessage.value = '111';
-        if (typeof DeviceMotionEvent !== 'undefined') {
+        if (window.DeviceMotionEvent) {
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
                 errorMessage.value = 'ask';
                 DeviceMotionEvent.requestPermission()
@@ -159,6 +184,7 @@ export default {
                         errorMessage.value = 'DeviceMotionEvent not enabled: ' + error;
                     })
             } else {
+                errorMessage.value = 'active';
                 window.addEventListener('devicemotion', handleMotion);
             }
         } else {
@@ -181,8 +207,7 @@ export default {
         gyroAlpha,
         gyroBeta,
         gyroGamma,
-        stepCount,
-        lastZ,
+        steps,
         errorMessage,
         checkDeviceMotionPermission
     };
