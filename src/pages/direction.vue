@@ -2,6 +2,7 @@
     <div>
         <h1>Direction</h1>
         <div id="status">{{ direction }}</div>
+        <div id="totalMovement">{{ totalMovement }}</div>
     </div>
   </template>
   
