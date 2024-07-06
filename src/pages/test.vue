@@ -3,6 +3,7 @@
         <h1>DeviceMotion Event Demo</h1>
     <p>Move your device to see the motion data.</p>
         <p>{{ errorMessage }}</p>
+        <div @click="checkDeviceMotionPermission()">Button</div>
     </div>
   </template>
   
@@ -15,14 +16,20 @@ export default {
     function checkDeviceMotionPermission() {
         
         errorMessage.value = '111';
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
             errorMessage.value = 'ask';
-            DeviceOrientationEvent.requestPermission()
-                .then(function() {
-                    errorMessage.value = 'DeviceOrientationEvent, DeviceMotionEvent enabled';
+            DeviceMotionEvent.requestPermission()
+                .then(permissionState => {
+                    errorMessage.value = 'permissionState'
+                    if (permissionState === 'granted') {
+                        errorMessage.value = 'Granted'
+                        window.addEventListener('devicemotion', () => {
+                            errorMessage.value = 'Motion'
+                        });
+                    }
                 })
                 .catch(function (error) {
-                    errorMessage.value = 'DeviceOrientationEvent, DeviceMotionEvent not enabled: ' + error;
+                    errorMessage.value = 'DeviceMotionEvent not enabled: ' + error;
                 })
         } else {
             errorMessage.value = 'Error';
