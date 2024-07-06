@@ -12,7 +12,6 @@
       alpha: <span>{{ gyroAlpha }}</span> <br>
       beta: <span>{{ gyroBeta }}</span> <br>
       gamma: <span>{{ gyroGamma }}</span> <br>
-      <p>Acceleration: {{ accel }}</p>
       <p>Steps: {{ stepCount }}</p>
       <p>lastZ: {{ lastZ }}</p>
       <p v-if="errorMessage">{{ errorMessage }}</p>
@@ -36,12 +35,18 @@ export default {
     const stepCount = ref('0');
     const lastZ = ref(null);
 
+    const threshold = ref(15);
+    const lastAcceleration = ref({ x: null, y: null, z: null });
+    const lastTime = ref(0);
+    /*
+
     const accelerationHistory = ref([]);
     const stepThreshold = ref(12);
     const historySize = ref(100);
     const stepInterval = ref(300);
     const accel = ref(null);
     const lastStepTime = ref(0);
+    */
 
     function handleMotion(event) {
       if (event.acceleration) {
@@ -55,6 +60,23 @@ export default {
         gyroBeta.value = event.rotationRate.beta ? event.rotationRate.beta.toFixed(2) : 'N/A';
         gyroGamma.value = event.rotationRate.gamma ? event.rotationRate.gamma.toFixed(2) : 'N/A';
       }
+
+        let currentTime = Date.now();
+        if (currentTime - lastTime.value > 100) { // Sample every 100ms
+            let acc = event.accelerationIncludingGravity;
+            let deltaX = Math.abs(lastAcceleration.value.x - acc.x);
+            let deltaY = Math.abs(lastAcceleration.value.y - acc.y);
+            let deltaZ = Math.abs(lastAcceleration.value.z - acc.z);
+
+            if ((deltaX + deltaY + deltaZ) > threshold.value) {
+                stepCount.value++;
+            }
+
+            lastAcceleration.value = { x: acc.x, y: acc.y, z: acc.z };
+            lastTime.value = currentTime;
+        }
+
+      /*
 
         const { x, y, z } = event.accelerationIncludingGravity;
         const magnitude = Math.sqrt(x*x + y*y + z*z);
@@ -126,7 +148,6 @@ export default {
         gyroBeta,
         gyroGamma,
         stepCount,
-        accel,
         lastZ,
         errorMessage,
         checkDeviceMotionPermission
