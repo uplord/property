@@ -35,6 +35,7 @@ export default {
     const stepCount = ref('0');
     const lastZ = ref(null);
 
+    /*
     const accelerationThreshold = ref(15);
     const rotationThreshold = ref(10);
     const lastAcceleration = ref({ x: null, y: null, z: null });
@@ -50,6 +51,12 @@ export default {
     const lastStepTime = ref(0);
     */
 
+    const stepThreshold = ref(1.0);
+    const minStepInterval = ref(300);
+    const lastStepTime = ref(0);
+    const lastFilteredAcc = ref(0);
+    const alpha = ref(0.8);
+
     function handleMotion(event) {
       if (event.acceleration) {
         accelX.value = event.acceleration.x ? event.acceleration.x.toFixed(2) : 'N/A';
@@ -62,6 +69,22 @@ export default {
         gyroBeta.value = event.rotationRate.beta ? event.rotationRate.beta.toFixed(2) : 'N/A';
         gyroGamma.value = event.rotationRate.gamma ? event.rotationRate.gamma.toFixed(2) : 'N/A';
       }
+
+        const acc = event.accelerationIncludingGravity;
+        const currentAcc = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+
+        const filteredAcc = alpha * lastFilteredAcc.value + (1 - alpha) * currentAcc;
+        const delta = filteredAcc - lastFilteredAcc.value;
+
+        const currentTime = Date.now();
+        if (delta > stepThreshold.value && (currentTime - lastStepTime.value > minStepInterval.value)) {
+            stepCount.value++;
+            lastStepTime.value = currentTime;
+        }
+
+        lastFilteredAcc.value = filteredAcc;
+
+      /*
 
         let currentTime = Date.now();
 
