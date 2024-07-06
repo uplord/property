@@ -12,7 +12,7 @@
       alpha: <span>{{ gyroAlpha }}</span> <br>
       beta: <span>{{ gyroBeta }}</span> <br>
       gamma: <span>{{ gyroGamma }}</span> <br>
-      <p>Acceleration: {{ accel.z }}</p>
+      <p>Acceleration: {{ accel }}</p>
       <p>Steps: {{ stepCount }}</p>
       <p>lastZ: {{ lastZ }}</p>
       <p v-if="errorMessage">{{ errorMessage }}</p>
