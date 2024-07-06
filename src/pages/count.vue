@@ -3,6 +3,7 @@
         <h1>Shake Counter</h1>
         <p>Shakes: <span id="shakeCount">{{ shakeCount }}</span></p>
         <div @click="checkDeviceMotionPermission()">Button</div>
+        <p>{{ errorMessage }}</p>
     </div>
   </template>
   
@@ -11,6 +12,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 export default {
   setup() {
 
+    let errorMessage = ref(null);
+    
     let shakeCount = ref(0);
     let threshold = 15; // Adjust this value to change the sensitivity
     let lastTime = ref(new Date().getTime());
