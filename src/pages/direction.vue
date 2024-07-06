@@ -1,8 +1,8 @@
 <template>
     <div>
         <h1>Direction</h1>
-        <div id="status">{{ direction }}</div>
-        <div id="totalMovement">{{ totalMovement }}</div>
+        <p id="status">{{ direction }}</p>
+        <p id="totalMovement">{{ total }}</p>
     </div>
   </template>
   
@@ -14,6 +14,7 @@ export default {
     let direction = ref('start');
     let previousGamma = ref(0);
     let totalMovement = ref(0);
+    let total = ref('test');
 
     function handleOrientation(event) {
         // Get the rotation around the Z-axis (alpha), X-axis (beta), and Y-axis (gamma)
@@ -32,7 +33,7 @@ export default {
         } else {
             direction.value = 'Device is upright or tilted slightly';
         }
-        totalMovement.value = `Movement: ${totalMovement.value.toFixed(2)}`;
+        total.value = `Movement: ${totalMovement.value.toFixed(2)}`;
 
         previousGamma.value = gamma;
     }
@@ -54,6 +55,7 @@ export default {
 
     return {
         direction,
+        total,
     };
   }
 }
