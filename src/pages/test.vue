@@ -37,7 +37,7 @@ export default {
     const lastZ = ref(null);
 
     const accelerationHistory = ref([]);
-    const stepThreshold = ref(1.2);
+    const stepThreshold = ref(12);
     const historySize = ref(100);
     const stepInterval = ref(300);
     const accel = ref(null);
