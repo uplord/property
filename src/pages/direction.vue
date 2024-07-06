@@ -11,12 +11,17 @@ export default {
   setup() {
 
     let direction = ref('start');
+    let previousGamma = ref(0);
+    let totalMovement = ref(0);
 
     function handleOrientation(event) {
         // Get the rotation around the Z-axis (alpha), X-axis (beta), and Y-axis (gamma)
         const alpha = event.alpha; // rotation around the Z-axis
         const beta = event.beta;   // rotation around the X-axis
         const gamma = event.gamma; // rotation around the Y-axis
+
+        const movement = gamma - previousGamma.value;
+        totalMovement.value += Math.abs(movement);
 
         // Check the gamma value to detect left or right movement
         if (gamma > 10) {
@@ -26,6 +31,9 @@ export default {
         } else {
             direction.value = 'Device is upright or tilted slightly';
         }
+        totalMovement.value = `Movement: ${totalMovement.value.toFixed(2)}`;
+
+        previousGamma.value = gamma;
     }
 
     onMounted(() => {
