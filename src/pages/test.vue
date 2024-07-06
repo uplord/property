@@ -35,8 +35,13 @@ export default {
 
     const stepCount = ref('0');
     const lastZ = ref(null);
-    const stepThreshold = ref(12);
+
+    const accelerationHistory = ref([]);
+    const stepThreshold = ref(1.2);
+    const historySize = ref(100);
+    const stepInterval = ref(300);
     const accel = ref(null);
+    const lastStepTime = ref(0);
 
     function handleMotion(event) {
       if (event.acceleration) {
@@ -51,6 +56,22 @@ export default {
         gyroGamma.value = event.rotationRate.gamma ? event.rotationRate.gamma.toFixed(2) : 'N/A';
       }
 
+        const { x, y, z } = event.accelerationIncludingGravity;
+        const magnitude = Math.sqrt(x*x + y*y + z*z);
+
+        if (accelerationHistory.value.length >= historySize.value) {
+            accelerationHistory.value.shift(); // Remove oldest if history is full
+        }
+        accelerationHistory.value.push(magnitude);
+
+        const averageMagnitude = accelerationHistory.value.reduce((sum, val) => sum + val, 0) / accelerationHistory.value.length;
+
+        const now = Date.now();
+        if (averageMagnitude > stepThreshold.value && (now - lastStepTime.value > stepInterval.value)) {
+            stepCount.value++;
+            lastStepTime.value = now;
+        }
+        /*
         const acceleration = event.accelerationIncludingGravity;
         accel.value = acceleration;
 
@@ -61,6 +82,7 @@ export default {
             }
         }
         lastZ.value = acceleration.z;
+        */
     }
 
     function checkDeviceMotionPermission() {
