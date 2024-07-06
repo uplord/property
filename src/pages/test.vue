@@ -38,11 +38,11 @@ export default {
 
     onMounted(() => {
 
-      checkDeviceMotionPermission();
     });
 
     return {
-      errorMessage
+      errorMessage,
+      checkDeviceMotionPermission
     };
   }
 }
