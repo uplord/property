@@ -2,6 +2,7 @@
     <div>
         <h1>Shake Counter</h1>
         <p>Shakes: <span id="shakeCount">{{ shakeCount }}</span></p>
+        <p>Total Movement: <span id="totalMovement">{{ totalMovement }}</span></p>
         <div @click="checkDeviceMotionPermission()">Button</div>
         <p>{{ errorMessage }}</p>
     </div>
@@ -18,6 +19,7 @@ export default {
     let threshold = 15; // Adjust this value to change the sensitivity
     let lastTime = ref(new Date().getTime());
     let shakeTimeout = 500;
+    let totalMovement = ref(0);
 
     function handleMotion() {
         let acceleration = event.accelerationIncludingGravity;
@@ -29,6 +31,10 @@ export default {
             let deltaZ = acceleration.z;
 
             let totalAcceleration = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+
+            let timeInterval = (currentTime - lastTime.value) / 1000; // Convert to seconds
+            let distanceMoved = totalAcceleration * timeInterval;
+            totalMovement.value += distanceMoved;
 
             if (totalAcceleration > threshold) {
                 shakeCount.value++;
@@ -73,6 +79,7 @@ export default {
 
     return {
         shakeCount,
+        totalMovement,
         errorMessage,
         checkDeviceMotionPermission
     };
