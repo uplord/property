@@ -15,6 +15,7 @@ export default {
     let previousGamma = ref(0);
     let totalMovement = ref(0);
     let total = ref('test');
+    let previousTime = ref(Date.now());
 
     function handleOrientation(event) {
         // Get the rotation around the Z-axis (alpha), X-axis (beta), and Y-axis (gamma)
@@ -22,8 +23,12 @@ export default {
         const beta = event.beta;   // rotation around the X-axis
         const gamma = event.gamma; // rotation around the Y-axis
 
-        const movement = gamma - previousGamma.value;
-        totalMovement.value += Math.abs(movement);
+        const currentTime = Date.now();
+
+        const timeDifference = (currentTime - previousTime) / 1000;
+        const gammaDifference = gamma - previousGamma;
+        const displacement = Math.abs(gammaDifference) * 0.15 * timeDifference;
+        totalMovement.value += displacement;
 
         // Check the gamma value to detect left or right movement
         if (gamma > 10) {
@@ -36,6 +41,7 @@ export default {
         total.value = `Movement: ${totalMovement.value.toFixed(2)}`;
 
         previousGamma.value = gamma;
+        previousTime.value = currentTime;
     }
 
     onMounted(() => {
