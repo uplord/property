@@ -19,7 +19,8 @@
       const previousGamma = ref(0);
       const totalMovement = ref(0);
       const total = ref(`Movement: 0.00 meters`);
-      const previousTime = ref(Date.now());
+      const previousOrientationTime = ref(Date.now());
+      const previousMotionTime = ref(Date.now());
       const speedScalingFactor = 0.1;
       const speed = ref(0);
       const speedDisplay = ref(`Speed: 0.00 m/s`);
@@ -29,7 +30,15 @@
   
       function handleOrientation(event) {
         const gamma = event.gamma; // rotation around the Y-axis
-
+        const currentTime = Date.now();
+  
+        const timeDifference = (currentTime - previousOrientationTime.value) / 1000;
+        if (timeDifference === 0) return; // Prevent division by zero
+  
+        const gammaDifference = gamma - previousGamma.value;
+  
+        speed.value = Math.abs(gammaDifference) / timeDifference * speedScalingFactor;
+  
         // Check the gamma value to detect left or right movement
         if (gamma > 10) {
           direction.value = 'Device tilted right';
@@ -39,7 +48,10 @@
           direction.value = 'Device is upright or tilted slightly';
         }
   
+        speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
+  
         previousGamma.value = gamma;
+        previousOrientationTime.value = currentTime;
       }
   
       function handleMotion(event) {
@@ -56,19 +68,13 @@
         // If the device is walking, update the total displacement
         if (isWalking.value) {
           const currentTime = Date.now();
-          const timeDifference = (currentTime - previousTime.value) / 1000; // Convert to seconds
+          const timeDifference = (currentTime - previousMotionTime.value) / 1000; // Convert to seconds
   
           if (timeDifference === 0) return; // Prevent division by zero
-
-          // Calculate the net acceleration (ignoring gravity)
-        const netAcc = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
-
-        // Calculate speed from the acceleration
-        speed.value = netAcc * timeDifference;
   
           // Estimate displacement based on speed and time interval, but only if speed is above threshold
           let displacement = 0;
-          if (speed.value > 1.4) {
+          if (speed.value > 2.5) {
             displacement = speed.value * timeDifference;
           }
   
@@ -76,12 +82,11 @@
   
           // Update total displacement
           totalMovement.value += displacement;
+  
           total.value = `Movement: ${totalMovement.value.toFixed(2)} meters`;
-
-          speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
   
           // Update the previous time for the next event
-          previousTime.value = currentTime;
+          previousMotionTime.value = currentTime;
         }
       }
   
