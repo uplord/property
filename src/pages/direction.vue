@@ -20,13 +20,10 @@ export default {
     let speedScalingFactor = 0.01;
     let speed = ref(0);
     let speedDisplay = ref(`Speed: 0.00 m/s`);
+    let isWalking = ref(false);
 
     function handleOrientation(event) {
-        // Get the rotation around the Z-axis (alpha), X-axis (beta), and Y-axis (gamma)
-        const alpha = event.alpha; // rotation around the Z-axis
-        const beta = event.beta;   // rotation around the X-axis
         const gamma = event.gamma; // rotation around the Y-axis
-
         const currentTime = Date.now();
 
         const timeDifference = (currentTime - previousTime.value) / 1000;
@@ -34,11 +31,13 @@ export default {
 
         speed.value = Math.abs(gammaDifference) / timeDifference * speedScalingFactor;
 
-        //const displacement = Math.abs(gammaDifference) * 0.15 * timeDifference;
-        if(speed.value > 2.5) {
-            const displacement = speed.value * timeDifference;
-            totalMovement.value += displacement;
+        /*
+        let displacement = 0;
+        if (speed.value > 2.5) {
+            speed.value * timeDifference;
         }
+        totalMovement.value += displacement;
+        */
 
         // Check the gamma value to detect left or right movement
         if (gamma > 10) {
@@ -48,11 +47,38 @@ export default {
         } else {
             direction.value = 'Device is upright or tilted slightly';
         }
-        total.value = `Movement: ${totalMovement.value.toFixed(2)} meters`;
+        
+        //total.value = `Movement: ${totalMovement.value.toFixed(2)} meters`;
         speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
 
         previousGamma.value = gamma;
         previousTime.value = currentTime;
+    }
+
+    function handleMotion(event) {
+        const acc = event.acceleration;
+
+        if (Math.abs(acc.x) > 1.0 || Math.abs(acc.y) > 1.0 || Math.abs(acc.z) > 1.0) {
+            isWalking.value = true;
+        } else {
+            isWalking.value = false;
+        }
+
+        if (isWalking) {
+            const currentTime = Date.now();
+            const timeDifference = (currentTime - previousTime.value) / 1000; // Convert to seconds
+
+            // Estimate displacement based on speed and time interval, but only if speed is above threshold
+            let displacement = 0;
+            if (speed.value > 2.5) {
+                displacement = speed.value * timeDifference;
+            }
+
+            // Update total displacement
+            totalMovement.value += displacement;
+
+            total.value = `Movement: ${totalDisplacement.toFixed(2)} meters`;
+        }
     }
 
     onMounted(() => {
@@ -60,6 +86,7 @@ export default {
         if (window.DeviceOrientationEvent) {
             // Add an event listener for device orientation changes
             window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('devicemotion', handleMotion);
         } else {
             // Inform the user that device orientation is not supported
             direction.value = 'Device orientation not supported';
