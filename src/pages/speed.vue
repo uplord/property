@@ -86,22 +86,26 @@ export default {
                     // Convert speed to km/h
                     const speedInKmPerHour = speed * 3600;
 
+                    // Update speed display regardless of walking status
+                    speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
+
                     if (speedInKmPerHour > averageWalkingSpeed) {
                         // Start walking detection after a delay
                         if (walkingDelayTimer === null) {
                             walkingDelayTimer = setTimeout(() => {
-                                speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
-                                startSpeedCounter();
                                 isWalking.value = true; // Set walking status
                                 statusDisplay.value = 'Status: Walking'; // Update status display
+                                startSpeedCounter();
                                 resetStationaryTimer();
                                 walkingDelayTimer = null; // Clear the timer
                             }, walkingDelay);
                         }
                     } else {
-                        speedDisplay.value = 'Speed: Below average walking speed';
-                        isWalking.value = false; // Set not walking status
-                        statusDisplay.value = 'Status: Below average walking speed'; // Update status display
+                        if (distanceAccumulator > 0) {
+                            // If there's movement but below average speed
+                            isWalking.value = false; // Set not walking status
+                            statusDisplay.value = 'Status: Below average walking speed'; // Update status display
+                        }
                         resetStationaryTimer();
                     }
                 } else {
