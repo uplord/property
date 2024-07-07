@@ -45,7 +45,6 @@ export default {
         const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
         const shakeThreshold = 15; // Threshold for detecting shakes (in m/s^2)
         const shakeCooldown = 1000; // Cooldown period for shake detection (in milliseconds)
-        const statusDisplay = ref('Status: Stationary');
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
