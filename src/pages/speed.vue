@@ -7,8 +7,8 @@
         <p id="shakeCounter">Shake Counter: {{ shakeCounter }}</p>
         <p id="status">{{ statusDisplay }}</p> <!-- Display walking or shake status -->
 
-        <button @click="requestPermissionAndStartDeviceMotion">Start Device Motion</button>
-        <button @click="stopDeviceMotion">Stop Device Motion</button>
+        <button v-if="!deviceMotionStarted" @click="requestPermissionAndStartDeviceMotion">Start Device Motion</button>
+        <button v-if="deviceMotionStarted" @click="stopDeviceMotion">Stop Device Motion</button>
     </div>
 </template>
 
@@ -57,6 +57,8 @@ export default {
         let lastShakeTime = 0; // Timestamp of the last detected shake
         let shakingDetected = ref(false); // Flag to track if shaking is detected
         let walkingDelayTimer = null; // Variable to manage walking delay timer
+
+        const deviceMotionStarted = ref(false); // Flag to indicate if device motion tracking has started
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -212,6 +214,7 @@ export default {
             if (!deviceMotionListenerAdded) {
                 window.addEventListener('devicemotion', handleDeviceMotion);
                 deviceMotionListenerAdded = true; // Update flag to indicate listener is active
+                deviceMotionStarted.value = true; // Mark device motion as started
             }
         }
 
@@ -220,6 +223,7 @@ export default {
             if (deviceMotionListenerAdded) {
                 window.removeEventListener('devicemotion', handleDeviceMotion);
                 deviceMotionListenerAdded = false; // Update flag to indicate listener is inactive
+                deviceMotionStarted.value = false; // Mark device motion as stopped
             }
         }
 
@@ -241,6 +245,27 @@ export default {
             }
         }
 
+        // Function to check if DeviceMotionEvent permission is granted
+        function checkDeviceMotionPermission() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startDeviceMotion();
+                        } else {
+                            errorDisplay.value = 'Permission to access device motion was denied.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking permission for device motion:', error);
+                        errorDisplay.value = `Error checking permission: ${error.message}`;
+                    });
+            } else {
+                // For non-iOS devices, start device motion detection directly
+                startDeviceMotion();
+            }
+        }
+
         // Initialize geolocation watch and event listeners
         onMounted(() => {
             if (navigator.geolocation) {
@@ -259,6 +284,9 @@ export default {
 
             // Add event listener for page visibility change
             document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // Check for device motion permission and start tracking if already granted
+            checkDeviceMotionPermission();
         });
 
         // Cleanup on component unmount
@@ -289,7 +317,8 @@ export default {
             shakeCounter,
             statusDisplay, // Expose statusDisplay to template
             requestPermissionAndStartDeviceMotion, // Expose method to request permission and start device motion
-            stopDeviceMotion // Expose stopDeviceMotion method to template
+            stopDeviceMotion, // Expose stopDeviceMotion method to template
+            deviceMotionStarted // Expose deviceMotionStarted flag to template
         };
     }
 }
