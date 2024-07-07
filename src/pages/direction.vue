@@ -3,6 +3,7 @@
         <h1>Direction</h1>
         <p id="status">{{ direction }}</p>
         <p id="totalMovement">{{ total }}</p>
+        <p id="speed">{{ speedDisplay }}</p>
     </div>
   </template>
   
@@ -14,8 +15,11 @@ export default {
     let direction = ref('start');
     let previousGamma = ref(0);
     let totalMovement = ref(0);
-    let total = ref('test');
+    let total = ref(`Movement: 0.00 meters`);
     let previousTime = ref(Date.now());
+    let speedScalingFactor = 0.01;
+    let speed = ref(0);
+    let speedDisplay = ref(`Speed: 0.00 m/s`);
 
     function handleOrientation(event) {
         // Get the rotation around the Z-axis (alpha), X-axis (beta), and Y-axis (gamma)
@@ -27,7 +31,11 @@ export default {
 
         const timeDifference = (currentTime - previousTime.value) / 1000;
         const gammaDifference = gamma - previousGamma.value;
-        const displacement = Math.abs(gammaDifference) * 0.15 * timeDifference;
+
+        speed.value = Math.abs(gammaDifference) / timeDifference * speedScalingFactor;
+
+        //const displacement = Math.abs(gammaDifference) * 0.15 * timeDifference;
+        const displacement = speed.value * timeDifference;
         totalMovement.value += displacement;
 
         // Check the gamma value to detect left or right movement
@@ -38,7 +46,8 @@ export default {
         } else {
             direction.value = 'Device is upright or tilted slightly';
         }
-        total.value = `Movement: ${totalMovement.value.toFixed(2)}`;
+        total.value = `Movement: ${totalMovement.value.toFixed(2)} meters`;
+        speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
 
         previousGamma.value = gamma;
         previousTime.value = currentTime;
@@ -62,6 +71,7 @@ export default {
     return {
         direction,
         total,
+        speedDisplay,
     };
   }
 }
