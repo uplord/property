@@ -2,6 +2,7 @@
     <div>
         <p id="speed">{{ speedDisplay }}</p>
         <p id="error">{{ errorDisplay }}</p>
+        <p id="steps">Total Steps: {{ totalSteps }}</p> <!-- Display total steps -->
     </div>
 </template>
 
@@ -28,10 +29,14 @@ function deg2rad(deg) {
 export default {
     setup() {
         const speedDisplay = ref('Calculating speed...');
-        const errorDisplay = ref(''); // Add reactive variable for error display
+        const errorDisplay = ref('');
+        const totalSteps = ref(0); // Add reactive variable for total steps
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
+        let lastAccelY = 0;
+        let accelStepCount = 0;
+        let accelerometer = null;
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -63,7 +68,20 @@ export default {
         // Function to handle errors
         function handleError(error) {
             console.error('Error obtaining position', error);
-            errorDisplay.value = `Error: ${error.message}`; // Update errorDisplay with the error message
+            errorDisplay.value = `Error: ${error.message}`;
+        }
+
+        // Function to handle accelerometer updates
+        function handleAcceleration(event) {
+            const threshold = 15; // Threshold for step detection (change based on calibration)
+            const deltaY = Math.abs(event.reading.y - lastAccelY);
+            
+            if (deltaY > threshold) {
+                accelStepCount += 1;
+                totalSteps.value = accelStepCount; // Update total steps display
+            }
+
+            lastAccelY = event.reading.y;
         }
 
         onMounted(() => {
@@ -81,6 +99,15 @@ export default {
             } else {
                 errorDisplay.value = 'Geolocation is not available on this device.';
             }
+
+            // Initialize accelerometer if available
+            if ('Accelerometer' in window) {
+                accelerometer = new Accelerometer({ frequency: 60 });
+                accelerometer.addEventListener('reading', handleAcceleration);
+                accelerometer.start();
+            } else {
+                errorDisplay.value = 'Accelerometer is not available on this device.';
+            }
         });
 
         onUnmounted(() => {
@@ -88,11 +115,18 @@ export default {
             if (watchId !== null) {
                 navigator.geolocation.clearWatch(watchId);
             }
+
+            // Stop accelerometer if initialized
+            if (accelerometer) {
+                accelerometer.stop();
+                accelerometer.removeEventListener('reading', handleAcceleration);
+            }
         });
 
         return {
             speedDisplay,
-            errorDisplay // Return errorDisplay to be used in the template
+            errorDisplay,
+            totalSteps // Return totalSteps to be used in the template
         };
     }
 }
