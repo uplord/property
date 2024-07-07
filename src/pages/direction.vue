@@ -35,8 +35,10 @@ export default {
         speed.value = Math.abs(gammaDifference) / timeDifference * speedScalingFactor;
 
         //const displacement = Math.abs(gammaDifference) * 0.15 * timeDifference;
-        const displacement = speed.value * timeDifference;
-        totalMovement.value += displacement;
+        if(speed.value > 2.5) {
+            const displacement = speed.value * timeDifference;
+            totalMovement.value += displacement;
+        }
 
         // Check the gamma value to detect left or right movement
         if (gamma > 10) {
