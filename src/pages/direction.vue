@@ -63,15 +63,15 @@ export default {
 
         if (isWalking.value) {
             const currentTime = Date.now();
+            if (currentTime === previousTime.value) return; 
             const timeDifference = (currentTime - previousTime.value) / 1000; // Convert to seconds
-
-            if (timeDifference === 0) return;
 
             // Estimate displacement based on speed and time interval, but only if speed is above threshold
             let displacement = 0;
             if (speed.value > 2.5) {
                 displacement = speed.value * timeDifference;
             }
+
             status.value = 'testing - ' + displacement;
 
             // Update total displacement
