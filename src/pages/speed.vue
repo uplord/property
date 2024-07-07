@@ -2,7 +2,7 @@
     <div>
         <p id="speed">{{ speedDisplay }}</p>
         <p id="error">{{ errorDisplay }}</p>
-        <p id="steps">Total Steps: {{ totalSteps }}</p> <!-- Display total steps -->
+        <p id="steps">Estimated Steps: {{ totalSteps }}</p> <!-- Display total steps -->
     </div>
 </template>
 
@@ -34,9 +34,9 @@ export default {
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
-        let lastAccelY = 0;
-        let accelStepCount = 0;
-        let accelerometer = null;
+        let distanceAccumulator = 0;
+        const averageStepsPerKm = 1250; // Approximate number of steps per kilometer
+        const speedToStepsMultiplier = 0.05; // Multiplier to estimate steps from speed
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -51,6 +51,12 @@ export default {
                     longitude
                 );
                 
+                distanceAccumulator += distance;
+
+                // Estimate steps based on distance
+                const steps = distanceAccumulator * averageStepsPerKm;
+                totalSteps.value = Math.round(steps); // Update total steps display
+
                 const timeElapsed = (currentTime - prevTime) / 1000; // time in seconds
                 const speed = distance / timeElapsed; // speed in km/s
 
@@ -71,19 +77,6 @@ export default {
             errorDisplay.value = `Error: ${error.message}`;
         }
 
-        // Function to handle accelerometer updates
-        function handleAcceleration(event) {
-            const threshold = 15; // Threshold for step detection (change based on calibration)
-            const deltaY = Math.abs(event.reading.y - lastAccelY);
-            
-            if (deltaY > threshold) {
-                accelStepCount += 1;
-                totalSteps.value = accelStepCount; // Update total steps display
-            }
-
-            lastAccelY = event.reading.y;
-        }
-
         onMounted(() => {
             // Check if geolocation is available
             if ('geolocation' in navigator) {
@@ -99,27 +92,12 @@ export default {
             } else {
                 errorDisplay.value = 'Geolocation is not available on this device.';
             }
-
-            // Initialize accelerometer if available
-            if ('Accelerometer' in window) {
-                accelerometer = new Accelerometer({ frequency: 60 });
-                accelerometer.addEventListener('reading', handleAcceleration);
-                accelerometer.start();
-            } else {
-                errorDisplay.value = 'Accelerometer is not available on this device.';
-            }
         });
 
         onUnmounted(() => {
             // Clean up the geolocation watch on component unmount
             if (watchId !== null) {
                 navigator.geolocation.clearWatch(watchId);
-            }
-
-            // Stop accelerometer if initialized
-            if (accelerometer) {
-                accelerometer.stop();
-                accelerometer.removeEventListener('reading', handleAcceleration);
             }
         });
 
