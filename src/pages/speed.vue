@@ -4,6 +4,7 @@
         <p id="error">{{ errorDisplay }}</p>
         <p id="steps">Estimated Steps: {{ totalSteps }}</p> <!-- Display total steps -->
         <p id="speedCounter">Speed Counter: {{ speedCounter }}</p> <!-- Display speed counter -->
+        <p id="shakeCounter">Shake Counter: {{ shakeCounter }}</p> <!-- Display shake counter -->
     </div>
 </template>
 
@@ -33,15 +34,18 @@ export default {
         const errorDisplay = ref('');
         const totalSteps = ref(0);
         const speedCounter = ref(0); // Counter to track time above average walking speed
+        const shakeCounter = ref(0); // Counter to track shakes when not walking
         const averageWalkingSpeed = 5; // Average walking speed in km/h
         const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
         const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
+        const shakeThreshold = 15; // Threshold for detecting shakes (in m/s^2)
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
         let distanceAccumulator = 0;
         let speedInterval = null; // Variable to hold setInterval reference
         let stationaryTimer = null; // Variable to hold setTimeout reference
+        let isWalking = false; // Flag to track if the user is walking
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -72,13 +76,22 @@ export default {
                     if (speedInKmPerHour > averageWalkingSpeed) {
                         speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
                         startSpeedCounter();
+                        isWalking = true;
+                        resetStationaryTimer();
                     } else {
                         speedDisplay.value = 'Speed: Below average walking speed';
+                        isWalking = false;
                         resetStationaryTimer();
+                    }
+                } else {
+                    // If movement is less than the threshold, update display to stationary
+                    if (distanceAccumulator === 0) {
+                        speedDisplay.value = 'Speed: Stationary';
                     }
                 }
             } else {
                 // If there's no previous position, just set up the initial values
+                speedDisplay.value = 'Speed: Stationary';
                 prevPosition = { latitude, longitude };
                 prevTime = currentTime;
             }
@@ -121,6 +134,19 @@ export default {
             }, stationaryThreshold);
         }
 
+        // Function to handle shake detection
+        function handleDeviceMotion(event) {
+            if (!isWalking) {
+                const { accelerationIncludingGravity } = event;
+                const { x, y, z } = accelerationIncludingGravity;
+                const acceleration = Math.sqrt(x * x + y * y + z * z);
+
+                if (acceleration > shakeThreshold) {
+                    shakeCounter.value += 1; // Increment shake counter
+                }
+            }
+        }
+
         // Function to handle page visibility change
         function handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
@@ -149,6 +175,13 @@ export default {
 
             // Add event listener for page visibility change
             document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // Check if DeviceMotion is available
+            if ('ondevicemotion' in window) {
+                window.addEventListener('devicemotion', handleDeviceMotion);
+            } else {
+                errorDisplay.value = 'DeviceMotion is not available on this device.';
+            }
         });
 
         onUnmounted(() => {
@@ -165,13 +198,17 @@ export default {
 
             // Remove event listener for page visibility change
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+            // Remove event listener for device motion
+            window.removeEventListener('devicemotion', handleDeviceMotion);
         });
 
         return {
             speedDisplay,
             errorDisplay,
             totalSteps,
-            speedCounter // Return speedCounter to be used in the template
+            speedCounter,
+            shakeCounter // Return shakeCounter to be used in the template
         };
     }
 }
