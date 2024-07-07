@@ -111,14 +111,14 @@ export default {
                 } else {
                     // No significant movement detected
                     if (distanceAccumulator === 0) {
-                        speedDisplay.value = 'Speed: Stationary';
+                        speedDisplay.value = `Speed: ${speedDisplay.value.split(' ')[1]}`; // Keep the speed display but update the text
                         isWalking.value = false; // Ensure walking status is false
                         statusDisplay.value = 'Status: Stationary'; // Update status display
                     }
                 }
             } else {
                 // Initial setup or shaking detected
-                speedDisplay.value = 'Speed: Stationary';
+                speedDisplay.value = `Speed: ${speedDisplay.value.split(' ')[1]}`; // Keep the speed display but update the text
                 isWalking.value = false; // Set walking status to false
                 statusDisplay.value = shakingDetected.value ? 'Status: Shaking' : 'Status: Stationary'; // Update status display
                 prevPosition = { latitude, longitude };
@@ -159,7 +159,7 @@ export default {
             }
 
             stationaryTimer = setTimeout(() => {
-                // Reset speed and distance accumulator if stationary for the defined period
+                // Reset speed if stationary for the defined period but do not reset steps
                 speedDisplay.value = 'Speed: Stationary';
                 stopSpeedCounter(); // Stop the counter if stationary for the defined period
                 distanceAccumulator = 0; // Reset distance accumulator
@@ -241,11 +241,11 @@ export default {
                 }
                 // Initialize or reinitialize position tracking
                 prevTime = null; // Reset previous time
-                distanceAccumulator = 0; // Reset distance accumulator
+                // Do not reset totalSteps and distanceAccumulator
             } else {
                 // Page is not visible, stop tracking motion
                 stopSpeedCounter(); // Stop the speed counter if the page is not visible
-                distanceAccumulator = 0; // Reset distance accumulator
+                // distanceAccumulator = 0; // Do not reset distanceAccumulator to preserve totalSteps
             }
         }
 
