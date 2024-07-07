@@ -198,6 +198,7 @@ export default {
                 DeviceMotionEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
+                            errorDisplay.value = '';
                             startDeviceMotion();
                         } else {
                             errorDisplay.value = 'Permission to access device motion was denied.';
