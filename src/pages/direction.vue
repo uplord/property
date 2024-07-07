@@ -79,12 +79,12 @@ export default {
             if (speed.value > 2.5) {
                 displacement = speed.value * timeDifference;
             }
-            status = 'testing - ' + displacement;
+            status.value = 'testing - ' + displacement;
 
             // Update total displacement
             totalMovement.value += displacement;
 
-            total.value = `Movement: ${totalMovement.toFixed(2)} meters`;
+            total.value = `Movement: ${totalMovement.value.toFixed(2)} meters`;
         }
     }
 
