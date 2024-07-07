@@ -46,6 +46,7 @@ export default {
         const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
         const shakeThreshold = 15; // Threshold for detecting shakes (in m/s^2)
         const shakeCooldown = 1000; // Cooldown period for shake detection (in milliseconds)
+        const walkingDelay = 2000; // Delay duration in milliseconds before detecting walking
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
@@ -55,6 +56,7 @@ export default {
         let deviceMotionListenerAdded = false; // Flag to track if device motion listener is added
         let lastShakeTime = 0; // Timestamp of the last detected shake
         let shakingDetected = ref(false); // Flag to track if shaking is detected
+        let walkingDelayTimer = null; // Variable to manage walking delay timer
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -83,11 +85,17 @@ export default {
                     const speedInKmPerHour = speed * 3600;
 
                     if (speedInKmPerHour > averageWalkingSpeed) {
-                        speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
-                        startSpeedCounter();
-                        isWalking.value = true; // Set walking status
-                        statusDisplay.value = 'Status: Walking'; // Update status display
-                        resetStationaryTimer();
+                        // Start walking detection after a delay
+                        if (walkingDelayTimer === null) {
+                            walkingDelayTimer = setTimeout(() => {
+                                speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
+                                startSpeedCounter();
+                                isWalking.value = true; // Set walking status
+                                statusDisplay.value = 'Status: Walking'; // Update status display
+                                resetStationaryTimer();
+                                walkingDelayTimer = null; // Clear the timer
+                            }, walkingDelay);
+                        }
                     } else {
                         speedDisplay.value = 'Speed: Below average walking speed';
                         isWalking.value = false; // Set not walking status
@@ -215,11 +223,15 @@ export default {
             }
         }
 
-        // Function to handle page visibility change
+        // Function to handle page visibility changes
         function handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
-                // Page is visible, reset position tracking without resetting totalSteps or speedCounter
-                prevPosition = null; // Reset previous position
+                if (prevPosition === null) {
+                    // If no previous position, reset display to stationary
+                    speedDisplay.value = 'Speed: Stationary';
+                    statusDisplay.value = 'Status: Stationary';
+                }
+                // Initialize or reinitialize position tracking
                 prevTime = null; // Reset previous time
                 distanceAccumulator = 0; // Reset distance accumulator
             } else {
