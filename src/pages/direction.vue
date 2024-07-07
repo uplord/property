@@ -20,7 +20,7 @@ export default {
     let totalMovement = ref(0);
     let total = ref(`Movement: 0.00 meters`);
     let previousTime = ref(Date.now());
-    let speedScalingFactor = 0.01;
+    let speedScalingFactor = 0.1;
     let speed = ref(0);
     let speedDisplay = ref(`Speed: 0.00 m/s`);
     let isWalking = ref(false);
@@ -36,14 +36,6 @@ export default {
 
         speed.value = Math.abs(gammaDifference) / timeDifference * speedScalingFactor;
 
-        /*
-        let displacement = 0;
-        if (speed.value > 2.5) {
-            speed.value * timeDifference;
-        }
-        totalMovement.value += displacement;
-        */
-
         // Check the gamma value to detect left or right movement
         if (gamma > 10) {
             direction.value = 'Device tilted right';
@@ -53,7 +45,6 @@ export default {
             direction.value = 'Device is upright or tilted slightly';
         }
         
-        //total.value = `Movement: ${totalMovement.value.toFixed(2)} meters`;
         speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
 
         previousGamma.value = gamma;
@@ -70,7 +61,7 @@ export default {
             isWalking.value = false;
         }
 
-        if (isWalking) {
+        if (isWalking.value) {
             const currentTime = Date.now();
             const timeDifference = (currentTime - previousTime.value) / 1000; // Convert to seconds
 
@@ -85,12 +76,14 @@ export default {
             totalMovement.value += displacement;
 
             total.value = `Movement: ${totalMovement.value.toFixed(2)} meters`;
+
+            previousTime.value = currentTime;
         }
     }
 
     onMounted(() => {
         // Check if DeviceOrientationEvent is supported
-        if (window.DeviceOrientationEvent) {
+        if (window.DeviceOrientationEvent && window.DeviceMotionEvent) {
             // Add an event listener for device orientation changes
             window.addEventListener('deviceorientation', handleOrientation);
             window.addEventListener('devicemotion', handleMotion);
