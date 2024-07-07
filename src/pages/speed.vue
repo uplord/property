@@ -46,6 +46,7 @@ export default {
         const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
         const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
         const shakeThreshold = 15; // Threshold for detecting shakes (in m/s^2)
+        const shakeCooldown = 1000; // Cooldown period for shake detection (in milliseconds)
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
@@ -53,6 +54,7 @@ export default {
         let speedInterval = null; // Variable to hold setInterval reference
         let stationaryTimer = null; // Variable to hold setTimeout reference
         let deviceMotionListenerAdded = false; // Flag to track if device motion listener is added
+        let lastShakeTime = 0; // Timestamp of the last detected shake
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -152,9 +154,14 @@ export default {
                 const { accelerationIncludingGravity } = event;
                 const { x, y, z } = accelerationIncludingGravity;
                 const acceleration = Math.sqrt(x * x + y * y + z * z);
+                const currentTime = Date.now();
 
                 if (acceleration > shakeThreshold) {
-                    shakeCounter.value += 1; // Increment shake counter
+                    // Check if enough time has passed since the last shake
+                    if (currentTime - lastShakeTime > shakeCooldown) {
+                        shakeCounter.value += 1; // Increment shake counter
+                        lastShakeTime = currentTime; // Update the timestamp of the last shake
+                    }
                 }
             }
         }
