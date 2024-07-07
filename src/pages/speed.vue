@@ -7,8 +7,8 @@
         <p id="shakeCounter">Shake Counter: {{ shakeCounter }}</p> <!-- Display shake counter -->
         <p id="isWalking">Walking Status: {{ isWalking ? 'Walking' : 'Not Walking' }}</p> <!-- Display walking status -->
 
-        <!-- Button to start device motion detection -->
-        <button @click="startDeviceMotion">Start Device Motion</button>
+        <!-- Button to request permission and start device motion detection -->
+        <button @click="requestPermissionAndStartDeviceMotion">Start Device Motion</button>
         <!-- Button to stop device motion detection -->
         <button @click="stopDeviceMotion">Stop Device Motion</button>
     </div>
@@ -144,25 +144,41 @@ export default {
 
         // Function to handle shake detection
         function handleDeviceMotion(event) {
-            errorDisplay.value = 3 + ' - ' + isWalking.value;
             if (!isWalking.value) {
-                errorDisplay.value = 4;
                 const { accelerationIncludingGravity } = event;
                 const { x, y, z } = accelerationIncludingGravity;
                 const acceleration = Math.sqrt(x * x + y * y + z * z);
 
                 if (acceleration > shakeThreshold) {
-                    errorDisplay.value = 5;
                     shakeCounter.value += 1; // Increment shake counter
                 }
             }
         }
 
+        // Function to request permission and start device motion detection
+        function requestPermissionAndStartDeviceMotion() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startDeviceMotion();
+                        } else {
+                            errorDisplay.value = 'Permission to access device motion was denied.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error requesting permission for device motion:', error);
+                        errorDisplay.value = `Error requesting permission: ${error.message}`;
+                    });
+            } else {
+                // For non-iOS devices, start device motion detection directly
+                startDeviceMotion();
+            }
+        }
+
         // Function to start device motion detection
         function startDeviceMotion() {
-            errorDisplay.value = 1;
             if (!deviceMotionListenerAdded) {
-                errorDisplay.value = 2;
                 window.addEventListener('devicemotion', handleDeviceMotion);
                 deviceMotionListenerAdded = true; // Update flag to indicate listener is active
             }
@@ -232,7 +248,7 @@ export default {
             speedCounter,
             shakeCounter,
             isWalking,
-            startDeviceMotion, // Expose startDeviceMotion method to template
+            requestPermissionAndStartDeviceMotion, // Expose method to request permission and start device motion
             stopDeviceMotion // Expose stopDeviceMotion method to template
         };
     }
