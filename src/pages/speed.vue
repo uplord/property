@@ -76,9 +76,9 @@ export default {
                 if (distance > minMovementThreshold) {
                     distanceAccumulator += distance;
 
-                    // Estimate steps based on distance
-                    const steps = distanceAccumulator * 1250; // Approximate number of steps per kilometer
-                    totalSteps.value = Math.round(steps); // Update total steps display
+                    // Calculate steps incrementally based on the new distance
+                    const stepsIncrement = distance * 1250; // Approximate number of steps per kilometer
+                    totalSteps.value += Math.round(stepsIncrement); // Update total steps display incrementally
 
                     const timeElapsed = (currentTime - prevTime) / 1000; // time in seconds
                     const speed = distance / timeElapsed; // speed in km/s
