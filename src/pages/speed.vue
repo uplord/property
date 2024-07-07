@@ -35,7 +35,6 @@ export default {
         const speedCounter = ref(0); // Counter to track time above average walking speed
         const averageWalkingSpeed = 5; // Average walking speed in km/h
         const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
-        const speedToStepsMultiplier = 0.05; // Multiplier to estimate steps from speed
         const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
         let prevPosition = null;
         let prevTime = null;
@@ -75,7 +74,7 @@ export default {
                         startSpeedCounter();
                         resetStationaryTimer();
                     } else {
-                        speedDisplay.value = 'Speed: Stationary';
+                        speedDisplay.value = 'Speed: Below average walking speed';
                         resetStationaryTimer();
                     }
                 }
@@ -115,8 +114,7 @@ export default {
             }
 
             stationaryTimer = setTimeout(() => {
-                stopSpeedCounter();
-                speedCounter.value = 0; // Reset the speed counter when stationary
+                stopSpeedCounter(); // Stop the counter if stationary for the defined period
             }, stationaryThreshold);
         }
 
