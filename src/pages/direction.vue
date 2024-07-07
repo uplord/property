@@ -30,25 +30,26 @@ export default {
     function handleOrientation(event) {
         const gamma = event.gamma; // rotation around the Y-axis
         const currentTime = Date.now();
+        if (currentTime - previousTime.value != 0) { 
+            const timeDifference = (currentTime - previousTime.value) / 1000;
+            const gammaDifference = gamma - previousGamma.value;
 
-        const timeDifference = (currentTime - previousTime.value) / 1000;
-        const gammaDifference = gamma - previousGamma.value;
+            speed.value = Math.abs(gammaDifference) / timeDifference * speedScalingFactor;
 
-        speed.value = Math.abs(gammaDifference) / timeDifference * speedScalingFactor;
+            // Check the gamma value to detect left or right movement
+            if (gamma > 10) {
+                direction.value = 'Device tilted right';
+            } else if (gamma < -10) {
+                direction.value = 'Device tilted left';
+            } else {
+                direction.value = 'Device is upright or tilted slightly';
+            }
+            
+            speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
 
-        // Check the gamma value to detect left or right movement
-        if (gamma > 10) {
-            direction.value = 'Device tilted right';
-        } else if (gamma < -10) {
-            direction.value = 'Device tilted left';
-        } else {
-            direction.value = 'Device is upright or tilted slightly';
+            previousGamma.value = gamma;
+            previousTime.value = currentTime;
         }
-        
-        speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
-
-        previousGamma.value = gamma;
-        previousTime.value = currentTime;
     }
 
     function handleMotion(event) {
