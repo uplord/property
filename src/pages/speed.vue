@@ -144,12 +144,15 @@ export default {
 
         // Function to handle shake detection
         function handleDeviceMotion(event) {
+            errorDisplay.value = 3 + ' - ' + isWalking.value;
             if (!isWalking.value) {
+                errorDisplay.value = 4;
                 const { accelerationIncludingGravity } = event;
                 const { x, y, z } = accelerationIncludingGravity;
                 const acceleration = Math.sqrt(x * x + y * y + z * z);
 
                 if (acceleration > shakeThreshold) {
+                    errorDisplay.value = 5;
                     shakeCounter.value += 1; // Increment shake counter
                 }
             }
@@ -157,7 +160,9 @@ export default {
 
         // Function to start device motion detection
         function startDeviceMotion() {
+            errorDisplay.value = 1;
             if (!deviceMotionListenerAdded) {
+                errorDisplay.value = 2;
                 window.addEventListener('devicemotion', handleDeviceMotion);
                 deviceMotionListenerAdded = true; // Update flag to indicate listener is active
             }
