@@ -6,6 +6,11 @@
         <p id="speedCounter">Speed Counter: {{ speedCounter }}</p> <!-- Display speed counter -->
         <p id="shakeCounter">Shake Counter: {{ shakeCounter }}</p> <!-- Display shake counter -->
         <p id="isWalking">Walking Status: {{ isWalking ? 'Walking' : 'Not Walking' }}</p> <!-- Display walking status -->
+
+        <!-- Button to start device motion detection -->
+        <button @click="startDeviceMotion">Start Device Motion</button>
+        <!-- Button to stop device motion detection -->
+        <button @click="stopDeviceMotion">Stop Device Motion</button>
     </div>
 </template>
 
@@ -47,6 +52,7 @@ export default {
         let distanceAccumulator = 0;
         let speedInterval = null; // Variable to hold setInterval reference
         let stationaryTimer = null; // Variable to hold setTimeout reference
+        let deviceMotionListenerAdded = false; // Flag to track if device motion listener is added
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -149,6 +155,22 @@ export default {
             }
         }
 
+        // Function to start device motion detection
+        function startDeviceMotion() {
+            if (!deviceMotionListenerAdded) {
+                window.addEventListener('devicemotion', handleDeviceMotion);
+                deviceMotionListenerAdded = true; // Update flag to indicate listener is active
+            }
+        }
+
+        // Function to stop device motion detection
+        function stopDeviceMotion() {
+            if (deviceMotionListenerAdded) {
+                window.removeEventListener('devicemotion', handleDeviceMotion);
+                deviceMotionListenerAdded = false; // Update flag to indicate listener is inactive
+            }
+        }
+
         // Function to handle page visibility change
         function handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
@@ -177,13 +199,6 @@ export default {
 
             // Add event listener for page visibility change
             document.addEventListener('visibilitychange', handleVisibilityChange);
-
-            // Check if DeviceMotion is available
-            if ('ondevicemotion' in window) {
-                window.addEventListener('devicemotion', handleDeviceMotion);
-            } else {
-                errorDisplay.value = 'DeviceMotion is not available on this device.';
-            }
         });
 
         onUnmounted(() => {
@@ -201,8 +216,8 @@ export default {
             // Remove event listener for page visibility change
             document.removeEventListener('visibilitychange', handleVisibilityChange);
 
-            // Remove event listener for device motion
-            window.removeEventListener('devicemotion', handleDeviceMotion);
+            // Remove event listener for device motion if active
+            stopDeviceMotion();
         });
 
         return {
@@ -211,7 +226,9 @@ export default {
             totalSteps,
             speedCounter,
             shakeCounter,
-            isWalking // Return isWalking to be used in the template
+            isWalking,
+            startDeviceMotion, // Expose startDeviceMotion method to template
+            stopDeviceMotion // Expose stopDeviceMotion method to template
         };
     }
 }
