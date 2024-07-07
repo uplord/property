@@ -55,13 +55,14 @@ export default {
         let stationaryTimer = null; // Variable to hold setTimeout reference
         let deviceMotionListenerAdded = false; // Flag to track if device motion listener is added
         let lastShakeTime = 0; // Timestamp of the last detected shake
+        let shakingDetected = false; // Flag to track if shaking is detected
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
             const { latitude, longitude } = position.coords;
             const currentTime = Date.now();
 
-            if (prevPosition) {
+            if (prevPosition && !shakingDetected) {
                 const distance = getDistanceFromLatLonInKm(
                     prevPosition.latitude,
                     prevPosition.longitude,
@@ -100,7 +101,7 @@ export default {
                     }
                 }
             } else {
-                // Initial setup
+                // Initial setup or shaking detected
                 speedDisplay.value = 'Speed: Stationary';
                 isWalking.value = false; // Set walking status to false
                 prevPosition = { latitude, longitude };
@@ -161,7 +162,10 @@ export default {
                     if (currentTime - lastShakeTime > shakeCooldown) {
                         shakeCounter.value += 1; // Increment shake counter
                         lastShakeTime = currentTime; // Update the timestamp of the last shake
+                        shakingDetected = true; // Set shaking detected flag
                     }
+                } else {
+                    shakingDetected = false; // Reset shaking detected flag
                 }
             }
         }
