@@ -79,6 +79,7 @@ export default {
             if (speed.value > 2.5) {
                 displacement = speed.value * timeDifference;
             }
+            status = 'testing - ' + displacement;
 
             // Update total displacement
             totalMovement.value += displacement;
