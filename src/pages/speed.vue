@@ -72,12 +72,15 @@ export default {
                     if (speedInKmPerHour > averageWalkingSpeed) {
                         speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
                         startSpeedCounter();
-                        resetStationaryTimer();
                     } else {
                         speedDisplay.value = 'Speed: Below average walking speed';
                         resetStationaryTimer();
                     }
                 }
+            } else {
+                // If there's no previous position, just set up the initial values
+                prevPosition = { latitude, longitude };
+                prevTime = currentTime;
             }
 
             prevPosition = { latitude, longitude };
@@ -125,19 +128,6 @@ export default {
                 prevPosition = null; // Reset previous position
                 prevTime = null; // Reset previous time
                 distanceAccumulator = 0; // Reset distance accumulator
-
-                // Optionally, restart position watching
-                if (watchId === null && 'geolocation' in navigator) {
-                    watchId = navigator.geolocation.watchPosition(
-                        handlePositionUpdate,
-                        handleError,
-                        {
-                            enableHighAccuracy: true,
-                            maximumAge: 0,
-                            timeout: 5000
-                        }
-                    );
-                }
             }
         }
 
