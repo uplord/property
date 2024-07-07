@@ -3,6 +3,7 @@
         <p id="speed">{{ speedDisplay }}</p>
         <p id="error">{{ errorDisplay }}</p>
         <p id="steps">Estimated Steps: {{ totalSteps }}</p> <!-- Display total steps -->
+        <p id="speedCounter">Speed Counter: {{ speedCounter }}</p> <!-- Display speed counter -->
     </div>
 </template>
 
@@ -30,14 +31,15 @@ export default {
     setup() {
         const speedDisplay = ref('Calculating speed...');
         const errorDisplay = ref('');
-        const totalSteps = ref(0); // Add reactive variable for total steps
+        const totalSteps = ref(0);
+        const speedCounter = ref(0); // Counter to track time above average walking speed
+        const averageWalkingSpeed = 5; // Average walking speed in km/h
+        const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
         let distanceAccumulator = 0;
-        const averageStepsPerKm = 1250; // Approximate number of steps per kilometer
-        const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
-        const speedToStepsMultiplier = 0.05; // Multiplier to estimate steps from speed
+        let speedInterval = null; // Variable to hold setInterval reference
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -51,25 +53,26 @@ export default {
                     latitude,
                     longitude
                 );
-                
-                if (distance > minMovementThreshold) { // Only update if there's significant movement
+
+                if (distance > minMovementThreshold) {
                     distanceAccumulator += distance;
 
                     // Estimate steps based on distance
-                    const steps = distanceAccumulator * averageStepsPerKm;
+                    const steps = distanceAccumulator * 1250; // Approximate number of steps per kilometer
                     totalSteps.value = Math.round(steps); // Update total steps display
 
                     const timeElapsed = (currentTime - prevTime) / 1000; // time in seconds
                     const speed = distance / timeElapsed; // speed in km/s
 
-                    // Convert speed to m/s and km/h
-                    const speedInMetersPerSecond = speed * 1000;
+                    // Convert speed to km/h
                     const speedInKmPerHour = speed * 3600;
 
-                    if (speedInKmPerHour > 0.1) { // Only update if speed is above a threshold
-                        speedDisplay.value = `Speed: ${speedInMetersPerSecond.toFixed(2)} m/s or ${speedInKmPerHour.toFixed(2)} km/h`;
+                    if (speedInKmPerHour > averageWalkingSpeed) {
+                        speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
+                        startSpeedCounter();
                     } else {
                         speedDisplay.value = 'Speed: Stationary';
+                        stopSpeedCounter();
                     }
                 }
             }
@@ -82,6 +85,23 @@ export default {
         function handleError(error) {
             console.error('Error obtaining position', error);
             errorDisplay.value = `Error: ${error.message}`;
+        }
+
+        // Function to start or reset the speed counter
+        function startSpeedCounter() {
+            if (speedInterval === null) {
+                speedInterval = setInterval(() => {
+                    speedCounter.value += 1; // Increment counter every second
+                }, 1000);
+            }
+        }
+
+        // Function to stop the speed counter
+        function stopSpeedCounter() {
+            if (speedInterval !== null) {
+                clearInterval(speedInterval);
+                speedInterval = null;
+            }
         }
 
         onMounted(() => {
@@ -106,12 +126,16 @@ export default {
             if (watchId !== null) {
                 navigator.geolocation.clearWatch(watchId);
             }
+
+            // Stop the speed counter if it is running
+            stopSpeedCounter();
         });
 
         return {
             speedDisplay,
             errorDisplay,
-            totalSteps // Return totalSteps to be used in the template
+            totalSteps,
+            speedCounter // Return speedCounter to be used in the template
         };
     }
 }
