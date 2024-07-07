@@ -19,7 +19,7 @@ export default {
     let totalMovement = ref(0);
     let total = ref(`Movement: 0.00 meters`);
     let previousTime = ref(Date.now());
-    let speedScalingFactor = 0.01;
+    let speedScalingFactor = 0.1;
     let speed = ref(0);
     let speedDisplay = ref(`Speed: 0.00 m/s`);
     let isWalking = ref(false);
