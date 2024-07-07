@@ -4,6 +4,8 @@
         <p id="status">{{ direction }}</p>
         <p id="totalMovement">{{ total }}</p>
         <p id="speed">{{ speedDisplay }}</p>
+        <p>Walking - {{ isWalking  }}</p>
+        <p>Acceleration - {{ acceleration  }}</p>
     </div>
   </template>
   
@@ -21,6 +23,7 @@ export default {
     let speed = ref(0);
     let speedDisplay = ref(`Speed: 0.00 m/s`);
     let isWalking = ref(false);
+    let acceleration = ref(null);
 
     function handleOrientation(event) {
         const gamma = event.gamma; // rotation around the Y-axis
@@ -57,6 +60,7 @@ export default {
 
     function handleMotion(event) {
         const acc = event.acceleration;
+        acceleration.value = acc;
 
         if (Math.abs(acc.x) > 1.0 || Math.abs(acc.y) > 1.0 || Math.abs(acc.z) > 1.0) {
             isWalking.value = true;
@@ -101,6 +105,8 @@ export default {
         direction,
         total,
         speedDisplay,
+        isWalking,
+        acceleration,
     };
   }
 }
