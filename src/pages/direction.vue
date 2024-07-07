@@ -6,6 +6,7 @@
         <p id="speed">{{ speedDisplay }}</p>
         <p>Walking - {{ isWalking  }}</p>
         <p>Acceleration - {{ acceleration  }}</p>
+        <p>Status - {{ status  }}</p>
     </div>
   </template>
   
@@ -24,6 +25,7 @@ export default {
     let speedDisplay = ref(`Speed: 0.00 m/s`);
     let isWalking = ref(false);
     let acceleration = ref(null);
+    let status = ref(null);
 
     function handleOrientation(event) {
         const gamma = event.gamma; // rotation around the Y-axis
@@ -81,7 +83,7 @@ export default {
             // Update total displacement
             totalMovement.value += displacement;
 
-            total.value = `Movement: ${totalDisplacement.toFixed(2)} meters`;
+            total.value = `Movement: ${totalMovement.toFixed(2)} meters`;
         }
     }
 
@@ -107,6 +109,7 @@ export default {
         speedDisplay,
         isWalking,
         acceleration,
+        status,
     };
   }
 }
