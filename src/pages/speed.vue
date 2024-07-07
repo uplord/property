@@ -118,6 +118,29 @@ export default {
             }, stationaryThreshold);
         }
 
+        // Function to handle page visibility change
+        function handleVisibilityChange() {
+            if (document.visibilityState === 'visible') {
+                // Page is visible, reset position tracking without resetting totalSteps or speedCounter
+                prevPosition = null; // Reset previous position
+                prevTime = null; // Reset previous time
+                distanceAccumulator = 0; // Reset distance accumulator
+
+                // Optionally, restart position watching
+                if (watchId === null && 'geolocation' in navigator) {
+                    watchId = navigator.geolocation.watchPosition(
+                        handlePositionUpdate,
+                        handleError,
+                        {
+                            enableHighAccuracy: true,
+                            maximumAge: 0,
+                            timeout: 5000
+                        }
+                    );
+                }
+            }
+        }
+
         onMounted(() => {
             // Check if geolocation is available
             if ('geolocation' in navigator) {
@@ -133,6 +156,9 @@ export default {
             } else {
                 errorDisplay.value = 'Geolocation is not available on this device.';
             }
+
+            // Add event listener for page visibility change
+            document.addEventListener('visibilitychange', handleVisibilityChange);
         });
 
         onUnmounted(() => {
@@ -146,6 +172,9 @@ export default {
             if (stationaryTimer !== null) {
                 clearTimeout(stationaryTimer);
             }
+
+            // Remove event listener for page visibility change
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
         });
 
         return {
