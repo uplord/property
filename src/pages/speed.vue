@@ -5,6 +5,7 @@
         <p id="steps">Estimated Steps: {{ totalSteps }}</p> <!-- Display total steps -->
         <p id="speedCounter">Speed Counter: {{ speedCounter }}</p> <!-- Display speed counter -->
         <p id="shakeCounter">Shake Counter: {{ shakeCounter }}</p> <!-- Display shake counter -->
+        <p id="isWalking">Walking Status: {{ isWalking ? 'Walking' : 'Not Walking' }}</p> <!-- Display walking status -->
     </div>
 </template>
 
@@ -35,6 +36,7 @@ export default {
         const totalSteps = ref(0);
         const speedCounter = ref(0); // Counter to track time above average walking speed
         const shakeCounter = ref(0); // Counter to track shakes when not walking
+        const isWalking = ref(false); // Flag to track if the user is walking
         const averageWalkingSpeed = 5; // Average walking speed in km/h
         const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
         const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
@@ -45,7 +47,6 @@ export default {
         let distanceAccumulator = 0;
         let speedInterval = null; // Variable to hold setInterval reference
         let stationaryTimer = null; // Variable to hold setTimeout reference
-        let isWalking = false; // Flag to track if the user is walking
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -76,11 +77,11 @@ export default {
                     if (speedInKmPerHour > averageWalkingSpeed) {
                         speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
                         startSpeedCounter();
-                        isWalking = true;
+                        isWalking.value = true; // Set walking status
                         resetStationaryTimer();
                     } else {
                         speedDisplay.value = 'Speed: Below average walking speed';
-                        isWalking = false;
+                        isWalking.value = false; // Set not walking status
                         resetStationaryTimer();
                     }
                 } else {
@@ -92,6 +93,7 @@ export default {
             } else {
                 // If there's no previous position, just set up the initial values
                 speedDisplay.value = 'Speed: Stationary';
+                isWalking.value = false; // Set walking status to false
                 prevPosition = { latitude, longitude };
                 prevTime = currentTime;
             }
@@ -136,7 +138,7 @@ export default {
 
         // Function to handle shake detection
         function handleDeviceMotion(event) {
-            if (!isWalking) {
+            if (!isWalking.value) {
                 const { accelerationIncludingGravity } = event;
                 const { x, y, z } = accelerationIncludingGravity;
                 const acceleration = Math.sqrt(x * x + y * y + z * z);
@@ -208,7 +210,8 @@ export default {
             errorDisplay,
             totalSteps,
             speedCounter,
-            shakeCounter // Return shakeCounter to be used in the template
+            shakeCounter,
+            isWalking // Return isWalking to be used in the template
         };
     }
 }
