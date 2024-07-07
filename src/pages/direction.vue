@@ -19,9 +19,8 @@
       const previousGamma = ref(0);
       const totalMovement = ref(0);
       const total = ref(`Movement: 0.00 meters`);
-      const previousOrientationTime = ref(Date.now());
-      const previousMotionTime = ref(Date.now());
-      const speedScalingFactor = 0.01;
+      const previousTime = ref(Date.now());
+      const speedScalingFactor = 0.1;
       const speed = ref(0);
       const speedDisplay = ref(`Speed: 0.00 m/s`);
       const isWalking = ref(false);
@@ -57,7 +56,7 @@
         // If the device is walking, update the total displacement
         if (isWalking.value) {
           const currentTime = Date.now();
-          const timeDifference = (currentTime - previousMotionTime.value) / 1000; // Convert to seconds
+          const timeDifference = (currentTime - previousTime.value) / 1000; // Convert to seconds
   
           if (timeDifference === 0) return; // Prevent division by zero
 
@@ -82,7 +81,7 @@
           speedDisplay.value = `Speed: ${speed.value.toFixed(2)} m/s`;
   
           // Update the previous time for the next event
-          previousMotionTime.value = currentTime;
+          previousTime.value = currentTime;
         }
       }
   
