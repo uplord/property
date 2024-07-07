@@ -35,11 +35,14 @@ export default {
         const speedCounter = ref(0); // Counter to track time above average walking speed
         const averageWalkingSpeed = 5; // Average walking speed in km/h
         const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
+        const speedToStepsMultiplier = 0.05; // Multiplier to estimate steps from speed
+        const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
         let distanceAccumulator = 0;
         let speedInterval = null; // Variable to hold setInterval reference
+        let stationaryTimer = null; // Variable to hold setTimeout reference
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -70,9 +73,10 @@ export default {
                     if (speedInKmPerHour > averageWalkingSpeed) {
                         speedDisplay.value = `Speed: ${speedInKmPerHour.toFixed(2)} km/h`;
                         startSpeedCounter();
+                        resetStationaryTimer();
                     } else {
                         speedDisplay.value = 'Speed: Stationary';
-                        stopSpeedCounter();
+                        resetStationaryTimer();
                     }
                 }
             }
@@ -104,6 +108,18 @@ export default {
             }
         }
 
+        // Function to reset the stationary timer
+        function resetStationaryTimer() {
+            if (stationaryTimer !== null) {
+                clearTimeout(stationaryTimer);
+            }
+
+            stationaryTimer = setTimeout(() => {
+                stopSpeedCounter();
+                speedCounter.value = 0; // Reset the speed counter when stationary
+            }, stationaryThreshold);
+        }
+
         onMounted(() => {
             // Check if geolocation is available
             if ('geolocation' in navigator) {
@@ -129,6 +145,9 @@ export default {
 
             // Stop the speed counter if it is running
             stopSpeedCounter();
+            if (stationaryTimer !== null) {
+                clearTimeout(stationaryTimer);
+            }
         });
 
         return {
