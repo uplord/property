@@ -36,7 +36,7 @@ function deg2rad(deg) {
 
 export default {
     setup() {
-        const speedDisplay = ref('Calculating speed...');
+        const speedDisplay = ref('Speed: Stationary');
         const errorDisplay = ref('');
         const totalSteps = ref(0);
         const speedCounter = ref(0); // Counter to track time above average walking speed
@@ -91,13 +91,14 @@ export default {
                         resetStationaryTimer();
                     }
                 } else {
-                    // If movement is less than the threshold, update display to stationary
+                    // No significant movement detected
                     if (distanceAccumulator === 0) {
                         speedDisplay.value = 'Speed: Stationary';
+                        isWalking.value = false; // Ensure walking status is false
                     }
                 }
             } else {
-                // If there's no previous position, just set up the initial values
+                // Initial setup
                 speedDisplay.value = 'Speed: Stationary';
                 isWalking.value = false; // Set walking status to false
                 prevPosition = { latitude, longitude };
@@ -138,7 +139,10 @@ export default {
             }
 
             stationaryTimer = setTimeout(() => {
+                // Reset speed and distance accumulator if stationary for the defined period
+                speedDisplay.value = 'Speed: Stationary';
                 stopSpeedCounter(); // Stop the counter if stationary for the defined period
+                distanceAccumulator = 0; // Reset distance accumulator
             }, stationaryThreshold);
         }
 
@@ -199,6 +203,7 @@ export default {
                 prevPosition = null; // Reset previous position
                 prevTime = null; // Reset previous time
                 distanceAccumulator = 0; // Reset distance accumulator
+                speedDisplay.value = 'Speed: Stationary'; // Ensure display reflects stationary status
             }
         }
 
