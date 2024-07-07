@@ -36,6 +36,7 @@ export default {
         let watchId = null;
         let distanceAccumulator = 0;
         const averageStepsPerKm = 1250; // Approximate number of steps per kilometer
+        const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
         const speedToStepsMultiplier = 0.05; // Multiplier to estimate steps from speed
 
         // Function to handle position updates
@@ -51,20 +52,26 @@ export default {
                     longitude
                 );
                 
-                distanceAccumulator += distance;
+                if (distance > minMovementThreshold) { // Only update if there's significant movement
+                    distanceAccumulator += distance;
 
-                // Estimate steps based on distance
-                const steps = distanceAccumulator * averageStepsPerKm;
-                totalSteps.value = Math.round(steps); // Update total steps display
+                    // Estimate steps based on distance
+                    const steps = distanceAccumulator * averageStepsPerKm;
+                    totalSteps.value = Math.round(steps); // Update total steps display
 
-                const timeElapsed = (currentTime - prevTime) / 1000; // time in seconds
-                const speed = distance / timeElapsed; // speed in km/s
+                    const timeElapsed = (currentTime - prevTime) / 1000; // time in seconds
+                    const speed = distance / timeElapsed; // speed in km/s
 
-                // Convert speed to m/s and km/h
-                const speedInMetersPerSecond = speed * 1000;
-                const speedInKmPerHour = speed * 3600;
+                    // Convert speed to m/s and km/h
+                    const speedInMetersPerSecond = speed * 1000;
+                    const speedInKmPerHour = speed * 3600;
 
-                speedDisplay.value = `Speed: ${speedInMetersPerSecond.toFixed(2)} m/s or ${speedInKmPerHour.toFixed(2)} km/h`;
+                    if (speedInKmPerHour > 0.1) { // Only update if speed is above a threshold
+                        speedDisplay.value = `Speed: ${speedInMetersPerSecond.toFixed(2)} m/s or ${speedInKmPerHour.toFixed(2)} km/h`;
+                    } else {
+                        speedDisplay.value = 'Speed: Stationary';
+                    }
+                }
             }
 
             prevPosition = { latitude, longitude };
