@@ -39,6 +39,7 @@ export default {
         const totalSteps = ref(0);
         const speedCounter = ref(0); // Counter to track time above average walking speed
         const shakeCounter = ref(0); // Counter to track shakes when not walking
+        const statusDisplay = ref('Status: Stationary'); // Display walking or shaking status
         const isWalking = ref(false); // Flag to track if the user is walking
         const averageWalkingSpeed = 5; // Average walking speed in km/h
         const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
@@ -53,7 +54,7 @@ export default {
         let stationaryTimer = null; // Variable to hold setTimeout reference
         let deviceMotionListenerAdded = false; // Flag to track if device motion listener is added
         let lastShakeTime = 0; // Timestamp of the last detected shake
-        let shakingDetected = false; // Flag to track if shaking is detected
+        let shakingDetected = ref(false); // Flag to track if shaking is detected
 
         // Function to handle position updates
         function handlePositionUpdate(position) {
@@ -114,7 +115,6 @@ export default {
             prevTime = currentTime;
         }
 
-
         // Function to handle errors
         function handleError(error) {
             console.error('Error obtaining position', error);
@@ -149,6 +149,9 @@ export default {
                 speedDisplay.value = 'Speed: Stationary';
                 stopSpeedCounter(); // Stop the counter if stationary for the defined period
                 distanceAccumulator = 0; // Reset distance accumulator
+                if (!shakingDetected.value) { // Only reset status if not shaking
+                    statusDisplay.value = 'Status: Stationary'; // Update status display
+                }
             }, stationaryThreshold);
         }
 
@@ -219,13 +222,16 @@ export default {
                 prevPosition = null; // Reset previous position
                 prevTime = null; // Reset previous time
                 distanceAccumulator = 0; // Reset distance accumulator
-                speedDisplay.value = 'Speed: Stationary'; // Ensure display reflects stationary status
+            } else {
+                // Page is not visible, stop tracking motion
+                stopSpeedCounter(); // Stop the speed counter if the page is not visible
+                distanceAccumulator = 0; // Reset distance accumulator
             }
         }
 
+        // Initialize geolocation watch and event listeners
         onMounted(() => {
-            // Check if geolocation is available
-            if ('geolocation' in navigator) {
+            if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
                     handlePositionUpdate,
                     handleError,
@@ -243,6 +249,7 @@ export default {
             document.addEventListener('visibilitychange', handleVisibilityChange);
         });
 
+        // Cleanup on component unmount
         onUnmounted(() => {
             // Clean up the geolocation watch on component unmount
             if (watchId !== null) {
@@ -268,7 +275,7 @@ export default {
             totalSteps,
             speedCounter,
             shakeCounter,
-            isWalking,
+            statusDisplay, // Expose statusDisplay to template
             requestPermissionAndStartDeviceMotion, // Expose method to request permission and start device motion
             stopDeviceMotion // Expose stopDeviceMotion method to template
         };
