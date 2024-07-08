@@ -195,7 +195,7 @@ export default {
             const acceleration = Math.sqrt(x * x + y * y + z * z);
             const currentTime = Date.now();
 
-            if (acceleration > shakeThreshold) {
+            if (!isWalking.value && acceleration > shakeThreshold) {
                 // Check if enough time has passed since the last shake
                 if (currentTime - lastShakeTime > shakeCooldown) {
                     shakeCounter.value += 1; // Increment shake counter
@@ -205,8 +205,8 @@ export default {
                 }
             } else {
                 shakingDetected.value = false; // Reset shaking detected flag
-                if (!isWalking.value) { // Only reset if not walking
-                    statusDisplay.value = 'Status: Stationary'; // Update status display
+                if (isWalking.value) {
+                    statusDisplay.value = 'Status: Walking'; // Update status display if walking
                 }
             }
         }
