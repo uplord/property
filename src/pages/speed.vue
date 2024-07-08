@@ -43,12 +43,14 @@ export default {
         const timeCounter = ref(0); // Renamed from extraCounter
         const statusDisplay = ref('Status: Stationary'); // Display walking or shaking status
         const isWalking = ref(false); // Flag to track if the user is walking
+        const shakingDetected = ref(false); // Flag to track if shaking is detected
+        const walkingDelayTimer = ref(null); // Timer for the delay after shaking
         const averageWalkingSpeed = 5; // Average walking speed in km/h
         const minMovementThreshold = 0.001; // Minimal distance to consider movement (in km)
         const stationaryThreshold = 5000; // Time in milliseconds to reset the counter when stationary
         const shakeThreshold = 15; // Threshold for detecting shakes (in m/s^2)
         const shakeCooldown = 1000; // Cooldown period for shake detection (in milliseconds)
-        const walkingDelay = 2000; // Delay duration in milliseconds before detecting walking
+        const delayAfterShake = 5000; // Delay duration after shaking before detecting walking (in milliseconds)
         let prevPosition = null;
         let prevTime = null;
         let watchId = null;
@@ -57,8 +59,6 @@ export default {
         let stationaryTimer = null; // Variable to hold setTimeout reference
         let deviceMotionListenerAdded = false; // Flag to track if device motion listener is added
         let lastShakeTime = 0; // Timestamp of the last detected shake
-        let shakingDetected = ref(false); // Flag to track if shaking is detected
-        let walkingDelayTimer = null; // Variable to manage walking delay timer
         let timeCounterInterval = null; // Variable to hold setInterval reference for timeCounter
 
         const deviceMotionStarted = ref(false); // Flag to indicate if device motion tracking has started
@@ -68,7 +68,7 @@ export default {
             const { latitude, longitude } = position.coords;
             const currentTime = Date.now();
 
-            if (prevPosition && !shakingDetected.value) { // Ignore movement if shaking is detected
+            if (prevPosition) {
                 const distance = getDistanceFromLatLonInKm(
                     prevPosition.latitude,
                     prevPosition.longitude,
@@ -94,14 +94,16 @@ export default {
 
                     if (speedInKmPerHour > averageWalkingSpeed) {
                         // Start walking detection after a delay
-                        if (walkingDelayTimer === null) {
-                            walkingDelayTimer = setTimeout(() => {
-                                isWalking.value = true; // Set walking status
-                                statusDisplay.value = 'Status: Walking'; // Update status display
-                                startWalkingCounter();
-                                resetStationaryTimer();
-                                walkingDelayTimer = null; // Clear the timer
-                            }, walkingDelay);
+                        if (walkingDelayTimer.value === null) {
+                            walkingDelayTimer.value = setTimeout(() => {
+                                if (!shakingDetected.value) {
+                                    isWalking.value = true; // Set walking status
+                                    statusDisplay.value = 'Status: Walking'; // Update status display
+                                    startWalkingCounter();
+                                    resetStationaryTimer();
+                                }
+                                walkingDelayTimer.value = null; // Clear the timer
+                            }, delayAfterShake);
                         }
                     } else {
                         if (distanceAccumulator > 0) {
@@ -119,13 +121,6 @@ export default {
                         statusDisplay.value = 'Status: Stationary'; // Update status display
                     }
                 }
-            } else {
-                // Initial setup or shaking detected
-                speedDisplay.value = `Speed: ${speedDisplay.value.split(' ')[1]}`; // Keep the speed display but update the text
-                isWalking.value = false; // Set walking status to false
-                statusDisplay.value = shakingDetected.value ? 'Status: Shaking' : 'Status: Stationary'; // Update status display
-                prevPosition = { latitude, longitude };
-                prevTime = currentTime;
             }
 
             prevPosition = { latitude, longitude };
@@ -195,13 +190,19 @@ export default {
             const acceleration = Math.sqrt(x * x + y * y + z * z);
             const currentTime = Date.now();
 
-            if (!isWalking.value && acceleration > shakeThreshold) {
+            if (acceleration > shakeThreshold) {
                 // Check if enough time has passed since the last shake
                 if (currentTime - lastShakeTime > shakeCooldown) {
                     shakeCounter.value += 1; // Increment shake counter
                     lastShakeTime = currentTime; // Update the timestamp of the last shake
                     shakingDetected.value = true; // Set shaking detected flag
                     statusDisplay.value = 'Status: Shaking'; // Update status display
+
+                    // Clear any existing walking delay timer if shaking is detected
+                    if (walkingDelayTimer.value !== null) {
+                        clearTimeout(walkingDelayTimer.value);
+                        walkingDelayTimer.value = null;
+                    }
                 }
             } else {
                 shakingDetected.value = false; // Reset shaking detected flag
