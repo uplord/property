@@ -2,9 +2,10 @@
     <div>
         <p id="speed">{{ speedDisplay }}</p>
         <p id="error">{{ errorDisplay }}</p>
-        <p id="steps">Estimated Steps: {{ totalSteps }}</p>
-        <p id="speedCounter">Speed Counter: {{ speedCounter }}</p>
+        <!-- Removed the estimated steps display -->
+        <p id="walkingCounter">Walking Counter: {{ walkingCounter }}</p> <!-- Updated counter display -->
         <p id="shakeCounter">Shake Counter: {{ shakeCounter }}</p>
+        <p id="timeCounter">Time Counter: {{ timeCounter }}</p> <!-- Updated counter display -->
         <p id="status">{{ statusDisplay }}</p> <!-- Display walking or shake status -->
 
         <button v-if="!deviceMotionStarted" @click="requestPermissionAndStartDeviceMotion">Start Device Motion</button>
@@ -37,8 +38,9 @@ export default {
         const speedDisplay = ref('Speed: Stationary');
         const errorDisplay = ref('');
         const totalSteps = ref(0);
-        const speedCounter = ref(0); // Counter to track time above average walking speed
-        const shakeCounter = ref(0); // Counter to track shakes when not walking
+        const walkingCounter = ref(0); // Renamed from speedCounter
+        const shakeCounter = ref(0);
+        const timeCounter = ref(0); // Renamed from extraCounter
         const statusDisplay = ref('Status: Stationary'); // Display walking or shaking status
         const isWalking = ref(false); // Flag to track if the user is walking
         const averageWalkingSpeed = 5; // Average walking speed in km/h
@@ -51,12 +53,13 @@ export default {
         let prevTime = null;
         let watchId = null;
         let distanceAccumulator = 0;
-        let speedInterval = null; // Variable to hold setInterval reference
+        let walkingInterval = null; // Variable to hold setInterval reference for walkingCounter
         let stationaryTimer = null; // Variable to hold setTimeout reference
         let deviceMotionListenerAdded = false; // Flag to track if device motion listener is added
         let lastShakeTime = 0; // Timestamp of the last detected shake
         let shakingDetected = ref(false); // Flag to track if shaking is detected
         let walkingDelayTimer = null; // Variable to manage walking delay timer
+        let timeCounterInterval = null; // Variable to hold setInterval reference for timeCounter
 
         const deviceMotionStarted = ref(false); // Flag to indicate if device motion tracking has started
 
@@ -95,7 +98,7 @@ export default {
                             walkingDelayTimer = setTimeout(() => {
                                 isWalking.value = true; // Set walking status
                                 statusDisplay.value = 'Status: Walking'; // Update status display
-                                startSpeedCounter();
+                                startWalkingCounter();
                                 resetStationaryTimer();
                                 walkingDelayTimer = null; // Clear the timer
                             }, walkingDelay);
@@ -135,20 +138,37 @@ export default {
             errorDisplay.value = `Error: ${error.message}`;
         }
 
-        // Function to start or reset the speed counter
-        function startSpeedCounter() {
-            if (speedInterval === null) {
-                speedInterval = setInterval(() => {
-                    speedCounter.value += 1; // Increment counter every second
+        // Function to start or reset the walking counter
+        function startWalkingCounter() {
+            if (walkingInterval === null) {
+                walkingInterval = setInterval(() => {
+                    walkingCounter.value += 1; // Increment counter every second
                 }, 1000);
             }
         }
 
-        // Function to stop the speed counter
-        function stopSpeedCounter() {
-            if (speedInterval !== null) {
-                clearInterval(speedInterval);
-                speedInterval = null;
+        // Function to stop the walking counter
+        function stopWalkingCounter() {
+            if (walkingInterval !== null) {
+                clearInterval(walkingInterval);
+                walkingInterval = null;
+            }
+        }
+
+        // Function to start or reset the time counter
+        function startTimeCounter() {
+            if (timeCounterInterval === null) {
+                timeCounterInterval = setInterval(() => {
+                    timeCounter.value += 1; // Increment time counter every second
+                }, 1000);
+            }
+        }
+
+        // Function to stop the time counter
+        function stopTimeCounter() {
+            if (timeCounterInterval !== null) {
+                clearInterval(timeCounterInterval);
+                timeCounterInterval = null;
             }
         }
 
@@ -161,8 +181,7 @@ export default {
             stationaryTimer = setTimeout(() => {
                 // Reset speed if stationary for the defined period but do not reset steps
                 speedDisplay.value = 'Speed: Stationary';
-                stopSpeedCounter(); // Stop the counter if stationary for the defined period
-                distanceAccumulator = 0; // Reset distance accumulator
+                stopWalkingCounter(); // Stop the counter if stationary for the defined period
                 if (!shakingDetected.value) { // Only reset status if not shaking
                     statusDisplay.value = 'Status: Stationary'; // Update status display
                 }
@@ -220,6 +239,7 @@ export default {
                 window.addEventListener('devicemotion', handleDeviceMotion);
                 deviceMotionListenerAdded = true; // Update flag to indicate listener is active
                 deviceMotionStarted.value = true; // Mark device motion as started
+                startTimeCounter(); // Start time counter when device motion starts
             }
         }
 
@@ -229,6 +249,7 @@ export default {
                 window.removeEventListener('devicemotion', handleDeviceMotion);
                 deviceMotionListenerAdded = false; // Update flag to indicate listener is inactive
                 deviceMotionStarted.value = false; // Mark device motion as stopped
+                stopTimeCounter(); // Stop time counter when device motion stops
             }
         }
 
@@ -244,8 +265,8 @@ export default {
                 prevTime = null; // Reset previous time
                 // Do not reset totalSteps and distanceAccumulator
             } else {
-                // Page is not visible, stop tracking motion
-                stopSpeedCounter(); // Stop the speed counter if the page is not visible
+                // Page is not visible, stop the walking counter if the page is not visible
+                stopWalkingCounter(); // Stop the walking counter if the page is not visible
                 // distanceAccumulator = 0; // Do not reset distanceAccumulator to preserve totalSteps
             }
         }
@@ -301,11 +322,14 @@ export default {
                 navigator.geolocation.clearWatch(watchId);
             }
 
-            // Stop the speed counter if it is running
-            stopSpeedCounter();
+            // Stop the walking counter if it is running
+            stopWalkingCounter();
             if (stationaryTimer !== null) {
                 clearTimeout(stationaryTimer);
             }
+
+            // Stop the time counter if it is running
+            stopTimeCounter();
 
             // Remove event listener for page visibility change
             document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -318,8 +342,9 @@ export default {
             speedDisplay,
             errorDisplay,
             totalSteps,
-            speedCounter,
+            walkingCounter, // Expose walkingCounter to template
             shakeCounter,
+            timeCounter, // Expose timeCounter to template
             statusDisplay, // Expose statusDisplay to template
             requestPermissionAndStartDeviceMotion, // Expose method to request permission and start device motion
             stopDeviceMotion, // Expose stopDeviceMotion method to template
